@@ -18,18 +18,14 @@
 
 package org.apache.gora.mapreduce;
 
-import java.io.IOException;
-import java.util.List;
-
 import org.apache.gora.util.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * MapReduce related utilities for Gora
@@ -77,9 +73,9 @@ public class GoraMapReduceUtils {
     if(inputPath != null) {
       Job job = new Job(conf);
       FileInputFormat.addInputPath(job, new Path(inputPath));
-      return new JobContext(job.getConfiguration(), null);
+      return new Job(job.getConfiguration());
     } 
     
-    return new JobContext(conf, null);
+    return new Job(conf, null);
   }
 }

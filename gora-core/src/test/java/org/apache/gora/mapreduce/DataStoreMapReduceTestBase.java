@@ -18,18 +18,17 @@
 
 package org.apache.gora.mapreduce;
 
-import java.io.IOException;
-
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.store.DataStore;
 import org.apache.hadoop.mapred.HadoopTestCase;
-import org.apache.hadoop.mapred.JobConf;
 import org.junit.Before;
 import org.junit.Test;
-
-// Slf4j logging imports
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+
+// Slf4j logging imports
 
 
 /**
@@ -37,11 +36,10 @@ import org.slf4j.LoggerFactory;
  * class, which actually only uses {@link MapReduceTestUtils} methods to
  * run the tests.
  */
-public abstract class DataStoreMapReduceTestBase extends HadoopTestCase {
-  public static final Logger LOG = LoggerFactory.getLogger(DataStoreMapReduceTestBase.class);
+public abstract class DataStoreMapReduceTestBase extends DataStoreMapReduceTestAbstract {
 
+  public static final Logger LOG = LoggerFactory.getLogger(DataStoreMapReduceTestBase.class);
   private DataStore<String, WebPage> webPageStore;
-  private JobConf job;
 
   public DataStoreMapReduceTestBase(int mrMode, int fsMode, int taskTrackers,
       int dataNodes) throws IOException {
@@ -49,29 +47,20 @@ public abstract class DataStoreMapReduceTestBase extends HadoopTestCase {
   }
 
   public DataStoreMapReduceTestBase() throws IOException {
-    this(HadoopTestCase.CLUSTER_MR, HadoopTestCase.DFS_FS, 2, 2);
+    this(HadoopTestCase.CLUSTER_MR, HadoopTestCase.LOCAL_FS, 2, 2);
   }
 
   @Override
   @Before
   public void setUp() throws Exception {
-    LOG.info("Setting up Hadoop Test Case...");
-    try {
       super.setUp();
       webPageStore = createWebPageDataStore();
-      job = createJobConf();
-    } catch (Exception e) {
-      LOG.error("Hadoop Test Case set up failed", e);
-      // cleanup
-      tearDown();
-    }
   } 
 
   @Override
   public void tearDown() throws Exception {
-    LOG.info("Tearing down Hadoop Test Case...");
-    webPageStore.close();
-    super.tearDown();
+      super.tearDown();
+      webPageStore.close();
   }
 
   protected abstract DataStore<String, WebPage> createWebPageDataStore()

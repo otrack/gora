@@ -17,7 +17,6 @@
  */
 package org.apache.gora.filter;
 
-import org.apache.avro.util.Utf8;
 import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ObjectWritable;
@@ -40,7 +39,7 @@ import java.util.Map;
 public class MapFieldValueFilter<K, T extends PersistentBase> implements Filter<K, T> {
 
   protected String fieldName;
-  protected Utf8 mapKey;
+  protected String mapKey;
   protected FilterOp filterOp;
   protected List<Object> operands = new ArrayList<Object>();
   protected boolean filterIfMissing = false;
@@ -57,9 +56,9 @@ public class MapFieldValueFilter<K, T extends PersistentBase> implements Filter<
     for (int i = 0; i < operands.size(); i++) {
       Object operand = operands.get(i);
       if (operand instanceof String) {
-        throw new IllegalStateException("Use Utf8 instead of String for operands");
+        throw new IllegalStateException("Use String instead of String for operands");
       }
-      if (operand instanceof Utf8) {
+      if (operand instanceof String) {
         operand = operand.toString();
       }
       if (operand instanceof Boolean) {
@@ -90,14 +89,14 @@ public class MapFieldValueFilter<K, T extends PersistentBase> implements Filter<
   @Override
   public void readFields(DataInput in) throws IOException {
     fieldName = Text.readString(in);
-    mapKey = new Utf8(Text.readString(in));
+    mapKey = new String(Text.readString(in));
     filterOp = WritableUtils.readEnum(in, FilterOp.class);
     operands.clear();
     int operandsSize = WritableUtils.readVInt(in);
     for (int i = 0; i < operandsSize; i++) {
       Object operand = ObjectWritable.readObject(in, conf);
       if (operand instanceof String) {
-        operand = new Utf8((String) operand);
+        operand = new String((String) operand);
       }
       operands.add(operand);
     }
@@ -108,7 +107,7 @@ public class MapFieldValueFilter<K, T extends PersistentBase> implements Filter<
   public boolean filter(K key, T persistent) {
     int fieldIndex = persistent.getSchema().getField(fieldName).pos();
     @SuppressWarnings("unchecked")
-    Map<Utf8, ?> fieldValue = (Map<Utf8, ?>) persistent.get(fieldIndex);
+    Map<String, ?> fieldValue = (Map<String, ?>) persistent.get(fieldIndex);
     if (fieldValue == null) {
       return filterIfMissing;
     }
@@ -136,11 +135,11 @@ public class MapFieldValueFilter<K, T extends PersistentBase> implements Filter<
     this.fieldName = fieldName;
   }
 
-  public Utf8 getMapKey() {
+  public String getMapKey() {
     return mapKey;
   }
 
-  public void setMapKey(Utf8 mapKey) {
+  public void setMapKey(String mapKey) {
     this.mapKey = mapKey;
   }
 

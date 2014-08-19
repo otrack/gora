@@ -17,15 +17,16 @@
  */
 package org.apache.gora.filter;
 
-import static org.junit.Assert.*;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-
 import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.hadoop.io.WritableUtils;
 import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+
+import static org.junit.Assert.*;
 
 public class TestMapFieldValueFilter {
 
@@ -34,7 +35,7 @@ public class TestMapFieldValueFilter {
     MapFieldValueFilter<String, WebPage> filter = new MapFieldValueFilter<String, WebPage>();
     //set filter field name as metadata
     filter.setFieldName(WebPage.Field.METADATA.toString());
-    filter.setMapKey(new Utf8("fetchTime"));
+    filter.setMapKey("fetchTime");
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
     filter.getOperands().add(new Utf8("http://example.org"));
@@ -53,7 +54,7 @@ public class TestMapFieldValueFilter {
     MapFieldValueFilter<String, WebPage> filter = new MapFieldValueFilter<String, WebPage>();
     //set filter field name as outlinks
     filter.setFieldName(WebPage.Field.OUTLINKS.toString());
-    filter.setMapKey(new Utf8("example"));
+    filter.setMapKey("example");
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
     filter.getOperands().add(new Utf8("http://example.org"));
@@ -75,7 +76,7 @@ public class TestMapFieldValueFilter {
     MapFieldValueFilter<String, WebPage> filter = new MapFieldValueFilter<String, WebPage>();
     //set filter field name as outlinks
     filter.setFieldName(WebPage.Field.OUTLINKS.toString());
-    filter.setMapKey(new Utf8("foobar.whatever"));
+    filter.setMapKey("foobar.whatever");
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
     filter.getOperands().add(new Utf8("Click here for foobar!"));

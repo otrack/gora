@@ -17,9 +17,7 @@
  */
 package org.apache.gora.mongodb.filters;
 
-import static org.junit.Assert.assertEquals;
-
-import org.apache.avro.util.Utf8;
+import com.mongodb.DBObject;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.filter.FilterList;
 import org.apache.gora.filter.FilterOp;
@@ -30,7 +28,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.mongodb.DBObject;
+import static org.junit.Assert.assertEquals;
 
 public class DefaultFactoryTest {
 
@@ -124,7 +122,7 @@ public class DefaultFactoryTest {
   private MapFieldValueFilter<String, WebPage> createHeadersFilter() {
     MapFieldValueFilter<String, WebPage> filter = new MapFieldValueFilter<String, WebPage>();
     filter.setFieldName(WebPage.Field.HEADERS.toString());
-    filter.setMapKey(new Utf8("C.T"));
+    filter.setMapKey("C.T");
     filter.getOperands().add("text/html");
     return filter;
   }
