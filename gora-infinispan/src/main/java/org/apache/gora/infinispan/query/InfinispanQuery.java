@@ -22,131 +22,118 @@ import java.util.List;
  */
 public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T> {
 
-    public static final Logger LOG = LoggerFactory.getLogger(InfinispanQuery.class);
+  public static final Logger LOG = LoggerFactory.getLogger(InfinispanQuery.class);
 
-    private QueryFactory qf;
-    private org.infinispan.query.dsl.Query q;
-    private QueryBuilder qb;
-    private String primaryFieldName;
+  private QueryFactory qf;
+  private org.infinispan.query.dsl.Query q;
+  private QueryBuilder qb;
+  private String primaryFieldName;
 
-    public InfinispanQuery(){
-        super(null);
+  public InfinispanQuery(){
+    super(null);
+  }
+
+  public InfinispanQuery(InfinispanStore<K, T> dataStore) {
+    super(dataStore);
+
+  }
+
+  public void build(){
+
+    FilterConditionContext context = null;
+
+    if(qb==null)
+      init();
+
+    if(q!=null)
+      throw new IllegalAccessError("Query already built; ignoring");
+
+    if (filter instanceof  MapFieldValueFilter){
+      MapFieldValueFilter mfilter = (MapFieldValueFilter) filter;
+      if (mfilter.getOperands().size()>1)
+        throw new IllegalAccessError("MapFieldValueFilter operand not supported.");
+      String value = mfilter.getMapKey()+"::"+mfilter.getOperands().get(0).toString();
+      switch (mfilter.getFilterOp()) {
+        case EQUALS:
+          context = qb.having(mfilter.getFieldName()).eq(value);
+          break;
+        case NOT_EQUALS:
+          context = qb.not().having(mfilter.getFieldName()).eq(value);
+          break;
+        default:
+          throw new IllegalAccessError("FilterOp not supported..");
+      }
+
+    } else if (filter instanceof  SingleFieldValueFilter){
+      SingleFieldValueFilter sfilter = (SingleFieldValueFilter) filter;
+      if (sfilter.getOperands().size()>1)
+        throw new IllegalAccessError("SingleFieldValueFilter operand not supported.");
+      Object value = sfilter.getOperands().get(0);
+      switch (sfilter.getFilterOp()) {
+        case EQUALS:
+          context = qb.having(sfilter.getFieldName()).eq(value);
+          break;
+        case NOT_EQUALS:
+          context = qb.not().having(sfilter.getFieldName()).eq(value);
+          break;
+        case LESS:
+          context = qb.having(sfilter.getFieldName()).lt(value);
+          break;
+        case LESS_OR_EQUAL:
+          context = qb.having(sfilter.getFieldName()).lte(value);
+          break;
+        case GREATER:
+          context = qb.having(sfilter.getFieldName()).gt(value);
+          break;
+        case GREATER_OR_EQUAL:
+          context = qb.having(sfilter.getFieldName()).gte(value);
+          break;
+        default:
+          throw new IllegalAccessError("FilterOp not supported..");
+      }
+
+    } else if (filter!=null) {
+      throw new IllegalAccessError("Filter not supported.");
     }
 
-	public InfinispanQuery(InfinispanStore<K, T> dataStore) {
-		super(dataStore);
-
-	}
-
-    // FIXME how to handle a specific key, or a key range ?
-    public void build(){
-
-        FilterConditionContext context = null;
-
-        if(qb==null)
-            init();
-
-        if(q!=null){
-            LOG.warn("Query already built; ignoring");
-            return;
-        }
-
-        if (filter instanceof  MapFieldValueFilter){
-            MapFieldValueFilter mfilter = (MapFieldValueFilter) filter;
-            Object loperand = mfilter.getOperands().get(0); // FIXME following the implementation of HBase.
-            switch (mfilter.getFilterOp()) {
-                case EQUALS:
-                    context = qb.having(mfilter.getFieldName()).eq(loperand);
-                    break;
-                case NOT_EQUALS:
-                    context = qb.not().having(mfilter.getFieldName()).eq(loperand);
-                    break;
-                case LESS:
-                    context = qb.having(mfilter.getFieldName()).lt(loperand);
-                    break;
-                case LESS_OR_EQUAL:
-                    context = qb.having(mfilter.getFieldName()).lte(loperand);
-                    break;
-                case GREATER:
-                    context = qb.having(mfilter.getFieldName()).gt(loperand);
-                    break;
-                case GREATER_OR_EQUAL:
-                    context = qb.having(mfilter.getFieldName()).gte(loperand);
-                    break;
-                default:
-                    LOG.error("FilterOp not supported..");
-                    break;
-            }
-
-        } else if (filter instanceof  SingleFieldValueFilter){
-            SingleFieldValueFilter sfilter = (SingleFieldValueFilter) filter;
-            Object loperand = sfilter.getOperands().get(0);
-            switch (sfilter.getFilterOp()) {
-                case EQUALS:
-                    context = qb.having(sfilter.getFieldName()).eq(loperand);
-                    break;
-                case NOT_EQUALS:
-                    context = qb.not().having(sfilter.getFieldName()).eq(loperand);
-                    break;
-                case LESS:
-                    context = qb.having(sfilter.getFieldName()).lt(loperand);
-                    break;
-                case LESS_OR_EQUAL:
-                    context = qb.having(sfilter.getFieldName()).lte(loperand);
-                    break;
-                case GREATER:
-                    context = qb.having(sfilter.getFieldName()).gt(loperand);
-                    break;
-                case GREATER_OR_EQUAL:
-                    context = qb.having(sfilter.getFieldName()).gte(loperand);
-                    break;
-                default:
-                    LOG.error("FilterOp not supported..");
-                    break;
-            }
-
-        } else if (filter!=null) {
-            LOG.error("Filter not supported.");
-        }
-
-        if (this.startKey==this.endKey && this.startKey != null ){
-            (context == null ? qb : context.and()).having(primaryFieldName).eq(this.startKey);
-        }else{
-            if (this.startKey!=null && this.endKey!=null)
-                context = (context == null ? qb : context.and()).having(primaryFieldName).between(this.startKey,this.endKey);
-            else if (this.startKey!=null)
-                context = (context == null ? qb : context.and()).having(primaryFieldName).between(this.startKey,null);
-            else if (this.endKey!=null)
-                (context == null ? qb : context.and()).having(primaryFieldName).between(null,this.endKey);
-        }
-
-        q = qb.build();
+    if (this.startKey==this.endKey && this.startKey != null ){
+      (context == null ? qb : context.and()).having(primaryFieldName).eq(this.startKey);
+    }else{
+      if (this.startKey!=null && this.endKey!=null)
+        context = (context == null ? qb : context.and()).having(primaryFieldName).between(this.startKey,this.endKey);
+      else if (this.startKey!=null)
+        context = (context == null ? qb : context.and()).having(primaryFieldName).between(this.startKey,null);
+      else if (this.endKey!=null)
+        (context == null ? qb : context.and()).having(primaryFieldName).between(null,this.endKey);
     }
 
-    public void project(String[] fields){
-        if(qb==null)
-            init();
-        if(q!=null)
-            throw new IllegalAccessError("Already built");
-        qb.setProjection(fields);
-    }
+    q = qb.build();
+  }
 
-    public List<T> list(){
-        if(q==null)
-            throw new IllegalAccessError("Build before list.");
-        return q.list();
-    }
+  public void project(String[] fields){
+    if(qb==null)
+      init();
+    if(q!=null)
+      throw new IllegalAccessError("Already built");
+    qb.setProjection(fields);
+  }
 
-    public int getResultSize(){
-        return q.getResultSize();
-    }
+  public List<T> list(){
+    if(q==null)
+      throw new IllegalAccessError("Build before list.");
+    return q.list();
+  }
 
-    private void init(){
-        InfinispanClient<K,T> client = ((InfinispanStore<K,T>)dataStore).getClient();
-        primaryFieldName = ((InfinispanStore<K,T>)dataStore).getPrimaryFieldName();
-        RemoteCache<K,T> remoteCache = client.getCache();
-        qf = Search.getQueryFactory(remoteCache);
-        qb = qf.from(dataStore.getPersistentClass());
-    }
+  public int getResultSize(){
+    return q.getResultSize();
+  }
+
+  private void init(){
+    InfinispanClient<K,T> client = ((InfinispanStore<K,T>)dataStore).getClient();
+    primaryFieldName = ((InfinispanStore<K,T>)dataStore).getPrimaryFieldName();
+    RemoteCache<K,T> remoteCache = client.getCache();
+    qf = Search.getQueryFactory(remoteCache);
+    qb = qf.from(dataStore.getPersistentClass());
+  }
 
 }

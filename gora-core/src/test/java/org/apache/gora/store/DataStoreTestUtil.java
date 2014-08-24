@@ -18,36 +18,14 @@
 
 package org.apache.gora.store;
 
-import static org.apache.gora.examples.WebPageDataCreator.ANCHORS;
-import static org.apache.gora.examples.WebPageDataCreator.CONTENTS;
-import static org.apache.gora.examples.WebPageDataCreator.LINKS;
-import static org.apache.gora.examples.WebPageDataCreator.SORTED_URLS;
-import static org.apache.gora.examples.WebPageDataCreator.URLS;
-import static org.apache.gora.examples.WebPageDataCreator.URL_INDEXES;
-import static org.apache.gora.examples.WebPageDataCreator.createWebPageData;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
-
 import org.apache.avro.Schema.Field;
 import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.WebPageDataCreator;
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.Metadata;
 import org.apache.gora.examples.generated.WebPage;
+import org.apache.gora.filter.FilterOp;
+import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.gora.persistency.Persistent;
 import org.apache.gora.persistency.impl.BeanFactoryImpl;
 import org.apache.gora.query.PartitionQuery;
@@ -56,6 +34,13 @@ import org.apache.gora.query.Result;
 import org.apache.gora.util.AvroUtils;
 import org.apache.gora.util.ByteUtils;
 import org.apache.gora.util.StringUtils;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.*;
+
+import static org.apache.gora.examples.WebPageDataCreator.*;
+import static org.junit.Assert.*;
 
 /**
  * Test utilities for DataStores. This utility class provides everything
@@ -1157,7 +1142,7 @@ public class DataStoreTestUtil {
   }
 
   public static void testPutMap(DataStore<String, WebPage> store)
-          throws IOException, Exception {
+    throws Exception {
 
     store.createSchema();
 
@@ -1168,8 +1153,35 @@ public class DataStoreTestUtil {
     page.getOutlinks().put(new Utf8("http://example3.com"), new Utf8("anchor3"));
     page.getOutlinks().put(new Utf8("http://example3.com"), new Utf8("anchor4"));
     store.put("com.example/http", page);
-    store.close();
+
   }
+
+  public static void testMapFieldValueFilter(DataStore<String, WebPage> store)
+    throws Exception {
+
+    store.createSchema();
+    WebPage page = WebPage.newBuilder().build();
+    page.setUrl(new Utf8("http://www.example.com"));
+    page.getOutlinks().put(new Utf8("http://www.example2.com"), new Utf8("anchor2"));
+    page.getOutlinks().put(new Utf8("http://www.example3.com"), new Utf8("anchor3"));
+    page.getOutlinks().put(new Utf8("http://www.example4.com"), new Utf8("anchor4"));
+
+    MapFieldValueFilter filter = new MapFieldValueFilter();
+    filter.setFieldName("outlinks");
+    filter.setMapKey(new Utf8("http://www.example2.com"));
+    filter.setFilterOp(FilterOp.EQUALS);
+    List<Utf8> operands = new ArrayList<>();
+    operands.add(new Utf8("anchor2"));
+    filter.setOperands(operands);
+    assertFalse(filter.filter("url",page)); // the page is not filtered out.
+
+    store.put("com.example/http", page);
+    store.close();
+    Query<String, WebPage> query = store.newQuery();
+    query.setFilter(filter);
+    assertTrue(query.execute().get().equals(page));
+  }
+
 
   private static byte[] toByteArray(ByteBuffer buffer) {
     int p = buffer.position();

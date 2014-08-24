@@ -362,4 +362,11 @@ public abstract class DataStoreTestBase {
     log.info("test method: testGetPartitions");
     DataStoreTestUtil.testGetPartitions(webPageStore);
   }
+
+  @Test
+  public void testMapFieldValueFilter() throws IOException, Exception {
+    log.info("test method: testGetPartitions");
+    DataStoreTestUtil.testMapFieldValueFilter(webPageStore);
+  }
+
 }

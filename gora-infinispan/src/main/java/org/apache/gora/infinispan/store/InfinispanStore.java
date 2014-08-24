@@ -18,7 +18,6 @@
 
 package org.apache.gora.infinispan.store;
 
-import org.apache.avro.Schema;
 import org.apache.gora.infinispan.query.InfinispanPartitionQuery;
 import org.apache.gora.infinispan.query.InfinispanQuery;
 import org.apache.gora.infinispan.query.InfinispanResult;
@@ -74,29 +73,14 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
             LOG.info("InfinispanStore initializing with key class: "
                     + keyClass.getCanonicalName()
-                    + " and persistent class:"
+                    + " and persistent class: "
                     + persistentClass.getCanonicalName());
 
             schema = persistentClass.newInstance().getSchema();
 
-            for (Schema.Field f : schema.getFields()){
-                if (f.aliases().contains("primary")) {
-                    if (primaryFieldName != null){
-                        primaryFieldName = f.name();
-                        primaryFieldPos = f.pos();
-                    }else{
-                        throw new IllegalArgumentException("Invalid schema due to multiple primary keys.");
-                    }
-                }
-            }
-
-            if (primaryFieldName == null) {
-                primaryFieldPos = 1;
-                primaryFieldName = schema.getFields().get(1).name();
-                LOG.warn("Cannot infer primary key from schema; using field \""+primaryFieldName+"\"");
-            } else {
-                LOG.info("Primary key from schema is \""+primaryFieldName+"\"");
-            }
+            primaryFieldPos = 0;
+            primaryFieldName = schema.getFields().get(0).name();
+            LOG.warn("Primary key for this schema is \""+primaryFieldName+"\".");
 
             this.infinispanClient.initialize(keyClass, persistentClass, properties);
 
@@ -210,9 +194,9 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
     @Override
     public void put(K key, T value) {
-        LOG.debug("put "+key.toString()+"=>"+value.toString());
-        if (value.get(primaryFieldPos)==null) {
-            LOG.warn("Invalid primary field; forcing. ");
+        LOG.info("put "+key.toString()+"=>"+value.toString());
+        if (value.get(primaryFieldPos)==null || !value.get(primaryFieldPos).equals(key) ) {
+            LOG.warn("Invalid or different primary field; forcing. ");
             value.put(primaryFieldPos,key);
         }
         this.infinispanClient.putInCache(key, value);

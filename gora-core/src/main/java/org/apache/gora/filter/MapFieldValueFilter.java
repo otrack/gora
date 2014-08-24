@@ -17,6 +17,7 @@
  */
 package org.apache.gora.filter;
 
+import org.apache.avro.util.Utf8;
 import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ObjectWritable;
@@ -39,7 +40,7 @@ import java.util.Map;
 public class MapFieldValueFilter<K, T extends PersistentBase> implements Filter<K, T> {
 
   protected String fieldName;
-  protected String mapKey;
+  protected CharSequence mapKey;
   protected FilterOp filterOp;
   protected List<Object> operands = new ArrayList<Object>();
   protected boolean filterIfMissing = false;
@@ -55,10 +56,7 @@ public class MapFieldValueFilter<K, T extends PersistentBase> implements Filter<
     WritableUtils.writeVInt(out, operands.size());
     for (int i = 0; i < operands.size(); i++) {
       Object operand = operands.get(i);
-      if (operand instanceof String) {
-        throw new IllegalStateException("Use String instead of String for operands");
-      }
-      if (operand instanceof String) {
+      if (operand instanceof Utf8) {
         operand = operand.toString();
       }
       if (operand instanceof Boolean) {
@@ -135,11 +133,11 @@ public class MapFieldValueFilter<K, T extends PersistentBase> implements Filter<
     this.fieldName = fieldName;
   }
 
-  public String getMapKey() {
+  public CharSequence getMapKey() {
     return mapKey;
   }
 
-  public void setMapKey(String mapKey) {
+  public void setMapKey(CharSequence mapKey) {
     this.mapKey = mapKey;
   }
 

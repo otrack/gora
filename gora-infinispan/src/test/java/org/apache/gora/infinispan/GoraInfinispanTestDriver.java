@@ -130,10 +130,10 @@ public class GoraInfinispanTestDriver extends GoraTestDriver {
         InfinispanStore store = (InfinispanStore) super.createDataStore(keyClass, persistentClass);
         if (persistentClass.equals(Employee.class)) {
             store.setPrimaryFieldName("ssn");
-            store.setPrimaryFieldPos(3);
+            store.setPrimaryFieldPos(2);
         }else  if(persistentClass.equals(WebPage.class)) {
             store.setPrimaryFieldName("url");
-            store.setPrimaryFieldPos(1);
+            store.setPrimaryFieldPos(0);
         }
         return store;
     }

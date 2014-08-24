@@ -21,7 +21,6 @@ import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.avro.compiler.specific.SpecificCompiler;
-import org.apache.avro.generic.GenericData;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 
@@ -57,7 +56,6 @@ public class GoraCompiler extends SpecificCompiler {
       //Schema newSchema = getSchemaWithDirtySupport(originalSchema, queue);
       Schema newSchema = originalSchema;
       GoraCompiler compiler = new GoraCompiler(newSchema);
-      compiler.setStringType(GenericData.StringType.String);
       compiler.setTemplateDir("/org/apache/gora/compiler/templates/");
       compiler.compileToDestination(src, dest);
       System.out.println("Compiled into: " + dest.getAbsolutePath());

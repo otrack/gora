@@ -20,7 +20,7 @@ public abstract class DataStoreMapReduceTestAbstract extends HadoopTestCase {
     }
 
     public DataStoreMapReduceTestAbstract() throws IOException {
-        this(CLUSTER_MR, DFS_FS, 2, 2);
+        this(HadoopTestCase.CLUSTER_MR, HadoopTestCase.DFS_FS, 2, 2);
     }
 
     @Override
