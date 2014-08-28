@@ -34,87 +34,91 @@ import java.util.Properties;
  */
 public class InfinispanClient<K, T extends PersistentBase> {
 
-    public static final Logger LOG = LoggerFactory.getLogger(InfinispanClient.class);
+  public static final Logger LOG = LoggerFactory.getLogger(InfinispanClient.class);
 
-    private static final String HOTROD_DEFAULT_HOST = "127.0.0.1";
-    private static final String HOTROD_DEFAULT_PORT = "15233";
+  private static final String HOTROD_HOST_KEY = "hotrod.host";
+  private static final String HOTROD_PORT_KEY = "hotrod.port";
+  private static final String HOTROD_DEFAULT_HOST = "127.0.0.1";
+  private static final String HOTROD_DEFAULT_PORT = "15233";
 
-    private Class<K> keyClass;
-	private Class<T> persistentClass;
-	private RemoteCacheManager cacheManager;
-    private Schema schema;
+  private Class<K> keyClass;
+  private Class<T> persistentClass;
+  private RemoteCacheManager cacheManager;
+  private Schema schema;
 
-	private RemoteCache<K, T> cache;
-    private boolean cacheExists;
+  private RemoteCache<K, T> cache;
+  private boolean cacheExists;
 
-    public void initialize(Class<K> keyClass, Class<T> persistentClass,
-                           Properties properties) throws Exception {
+  public void initialize(Class<K> keyClass, Class<T> persistentClass,
+    Properties properties) throws Exception {
 
-		LOG.info("Initializing InfinispanClient");
+    System.out.println(properties.toString());
 
-        String host = System.getProperty("hotrod_host",HOTROD_DEFAULT_HOST);
-        int port = Integer.valueOf(System.getProperty("hotrod_port", HOTROD_DEFAULT_PORT));
+    String host = properties.getProperty(HOTROD_HOST_KEY,HOTROD_DEFAULT_HOST);
+    int port = Integer.valueOf(properties.getProperty(HOTROD_PORT_KEY, HOTROD_DEFAULT_PORT));
 
-        this.keyClass = keyClass;
-		this.persistentClass = persistentClass;
-        this.schema = persistentClass.newInstance().getSchema();
+    LOG.info("Initializing InfinispanClient with "+host+":"+port);
 
-		ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-		clientBuilder
-                .addServer()
-                .host(host)
-                .port(port)
-                .marshaller(new AvroMarshaller<T>(persistentClass));
-		cacheManager = new RemoteCacheManager(clientBuilder.build(), true);
-        cacheManager.start();
-        cache = cacheManager.getCache(); // FIXME
-	}
+    this.keyClass = keyClass;
+    this.persistentClass = persistentClass;
+    this.schema = persistentClass.newInstance().getSchema();
 
-	public boolean cacheExists() {
-		return cacheExists;
-	}
+    ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+    clientBuilder
+      .addServer()
+      .host(host)
+      .port(port)
+      .marshaller(new AvroMarshaller<T>(persistentClass));
+    cacheManager = new RemoteCacheManager(clientBuilder.build(), true);
+    cacheManager.start();
+    cache = cacheManager.getCache(); // FIXME
+  }
 
-	/**
-	 * Check if cache already exists. If not, create it.
-	 */
-	public void createCache() {
-        cacheExists = true; // FIXME
-	}
+  public boolean cacheExists() {
+    return cacheExists;
+  }
 
-	/**
-	 * Drop keyspace.
-	 */
-	public void dropCache() {
-        cacheExists = false; // FIXME
-        cache.clear();
-	}
+  /**
+   * Check if cache already exists. If not, create it.
+   */
+  public void createCache() {
+    cacheExists = true; // FIXME
+  }
 
-	public void deleteByKey(K key) {
-        cache.remove(key);
-    }
+  /**
+   * Drop keyspace.
+   */
+  public void dropCache() {
+    cacheExists = false; // FIXME
+    cache.clear();
+  }
 
-	public void putInCache(K key, T val) {
-		this.cache.put(key, val);
-	}
+  public void deleteByKey(K key) {
+    cache.remove(key);
+  }
 
-    public T getInCache(K key){
-        return cache.get(key);
-    }
+  public void putInCache(K key, T val) {
+    this.cache.put(key, val);
+  }
 
-	public String getCacheName() {
-		return this.keyClass.getName();
-	}
+  public T getInCache(K key){
+    return cache.get(key);
+  }
 
-	public RemoteCacheManager getCacheManager() {
-		return cacheManager;
-	}
+  public String getCacheName() {
+    return this.keyClass.getName();
+  }
 
-	public void setCacheManager(RemoteCacheManager cacheManager) {
-		this.cacheManager = cacheManager;
-	}
+  public RemoteCacheManager getCacheManager() {
+    return cacheManager;
+  }
 
-	public RemoteCache<K, T> getCache() {
-		return this.cache;
-	}
+  public void setCacheManager(RemoteCacheManager cacheManager) {
+    this.cacheManager = cacheManager;
+  }
+
+  public RemoteCache<K, T> getCache() {
+    return this.cache;
+  }
 
 }

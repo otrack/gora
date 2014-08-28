@@ -14,6 +14,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -107,15 +108,15 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
         (context == null ? qb : context.and()).having(primaryFieldName).between(null,this.endKey);
     }
 
-    q = qb.build();
-  }
+    qb.maxResults((int) this.getLimit());
 
-  public void project(String[] fields){
-    if(qb==null)
-      init();
-    if(q!=null)
-      throw new IllegalAccessError("Already built");
-    qb.setProjection(fields);
+    String []fieldsWithPrimary = Arrays.copyOf(fields, fields.length + 1);
+    fieldsWithPrimary[fields.length] = primaryFieldName;
+    qb.setProjection(fieldsWithPrimary);
+
+    qb.startOffset(this.getOffset());
+
+    q = qb.build();
   }
 
   public List<T> list(){

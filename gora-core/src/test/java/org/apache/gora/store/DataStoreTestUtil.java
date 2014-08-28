@@ -1020,8 +1020,8 @@ public class DataStoreTestUtil {
 
     assertNumResults(store.newQuery(), URLS.length);
     store.deleteByQuery(query);
-    store.deleteByQuery(query);
-    store.deleteByQuery(query);//don't you love that HBase sometimes does not delete arbitrarily
+    // store.deleteByQuery(query);
+    // store.deleteByQuery(query);//don't you love that HBase sometimes does not delete arbitrarily
     
     store.flush();
     
@@ -1173,13 +1173,16 @@ public class DataStoreTestUtil {
     List<Utf8> operands = new ArrayList<>();
     operands.add(new Utf8("anchor2"));
     filter.setOperands(operands);
-    assertFalse(filter.filter("url",page)); // the page is not filtered out.
+    assertFalse(filter.filter("url", page)); // the page is not filtered out.
 
     store.put("com.example/http", page);
     store.close();
     Query<String, WebPage> query = store.newQuery();
     query.setFilter(filter);
-    assertTrue(query.execute().get().equals(page));
+    Result<String,WebPage> result = query.execute();
+    result.next();
+    WebPage page2 = result.get();
+    assertTrue(page2.equals(page));
   }
 
 

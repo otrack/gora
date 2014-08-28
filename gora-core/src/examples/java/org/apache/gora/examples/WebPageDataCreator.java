@@ -18,12 +18,6 @@
 
 package org.apache.gora.examples;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-
 import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.generated.Metadata;
 import org.apache.gora.examples.generated.WebPage;
@@ -32,6 +26,12 @@ import org.apache.gora.store.DataStoreFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * Creates and stores some data to be used in the tests.
@@ -118,7 +118,7 @@ public class WebPageDataCreator {
       
       for(int i=0; i<URLS.length; i++) {
         page = WebPage.newBuilder().build();
-        page.setUrl(new Utf8(URLS[i]));
+        page.setUrl(URLS[i]);
         page.setParsedContent(new ArrayList<CharSequence>());
         if (CONTENTS[i]!=null){
           page.setContent(ByteBuffer.wrap(CONTENTS[i].getBytes()));

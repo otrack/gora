@@ -153,4 +153,9 @@ public interface Query<K, T extends Persistent> {
    * @return the limit if it is set, otherwise a negative number
    */
   long getLimit();
+
+  void setOffset(int offset);
+
+  int getOffset();
+
 }

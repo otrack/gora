@@ -18,10 +18,6 @@
 
 package org.apache.gora.query.impl;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -33,12 +29,16 @@ import org.apache.gora.store.DataStore;
 import org.apache.gora.store.impl.DataStoreBase;
 import org.apache.gora.util.ClassLoadingUtils;
 import org.apache.gora.util.IOUtils;
+import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configurable; 
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.util.ReflectionUtils;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 /**
  * Base class for Query implementations.
@@ -61,6 +61,7 @@ public abstract class QueryBase<K, T extends PersistentBase>
   protected boolean localFilterEnabled=true;
 
   protected long limit = -1;
+  protected int offset = -1;
 
   private Configuration conf;
 
@@ -197,6 +198,17 @@ public String[] getFields() {
   public long getLimit() {
     return limit;
   }
+
+  @Override
+  public int getOffset(){
+    return offset;
+  }
+
+  @Override
+  public void setOffset(int offset1){
+    offset = offset1;
+  }
+
 
   public Configuration getConf() {
     return conf;

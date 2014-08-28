@@ -1,10 +1,10 @@
 package org.apache.gora.persistency.impl;
 
+import org.apache.gora.persistency.Dirtyable;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-
-import org.apache.gora.persistency.Dirtyable;
 
 /**
  * A {@link List} implementation that wraps another list, intercepting
@@ -132,6 +132,11 @@ public class DirtyCollectionWrapper<T> implements Dirtyable,
   @Override
   public int hashCode() {
     return delegate.hashCode();
+  }
+
+  @Override
+  public String toString(){
+    return delegate.toString();
   }
 
   protected Collection<T> getDelegate() {

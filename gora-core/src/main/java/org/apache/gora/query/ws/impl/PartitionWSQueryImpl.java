@@ -137,6 +137,16 @@ public class PartitionWSQueryImpl<K, T extends Persistent>
   }
 
   @Override
+  public void setOffset(int offset) {
+    baseQuery.setOffset(offset);
+  }
+
+  @Override
+  public int getOffset() {
+    return baseQuery.getOffset();
+  }
+
+  @Override
   /**
    * Sets the fields to be retrieved
    */
