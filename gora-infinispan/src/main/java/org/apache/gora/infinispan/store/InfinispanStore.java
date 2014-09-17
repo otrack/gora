@@ -50,9 +50,17 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
    */
   public static final Logger LOG = LoggerFactory.getLogger(InfinispanStore.class);
 
+  /**
+   * Infinispan store Parameters
+   */
+  private static final String PARTITION_SIZE_DEFAULT = "1"; // for testing purposes only ( a well-known working value for M/R is 1000).
+  private static final String PARTITION_SIZE_KEY = "hotrod.partition.size";
+
   private InfinispanClient<K, T> infinispanClient = new InfinispanClient<K, T>();
   private String primaryFieldName;
   private int primaryFieldPos;
+  private int partitionSize;
+
   /**
    * The default constructor for InfinispanStore
    */
@@ -75,14 +83,15 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
         + keyClass.getCanonicalName()
         + " and persistent class: "
         + persistentClass.getCanonicalName());
-
       schema = persistentClass.newInstance().getSchema();
 
       primaryFieldPos = 0;
       primaryFieldName = schema.getFields().get(0).name();
       LOG.warn("Primary key for this schema is \""+primaryFieldName+"\".");
-
       this.infinispanClient.initialize(keyClass, persistentClass, properties);
+
+      partitionSize = Integer.valueOf(properties.getProperty(PARTITION_SIZE_KEY,PARTITION_SIZE_DEFAULT));
+      LOG.info("Partition query size set to "+partitionSize);
 
     } catch (Exception e) {
       LOG.error(e.getMessage());
@@ -161,12 +170,25 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
   @Override
   public List<PartitionQuery<K, T>> getPartitions(Query<K, T> query)
     throws IOException {
+
     List<PartitionQuery<K,T>> partitionQueries = new ArrayList<PartitionQuery<K, T>>();
-    InfinispanPartitionQuery<K,T> partitionQuery = new InfinispanPartitionQuery<K,T>((InfinispanStore<K,T>) query.getDataStore());
-    partitionQuery.setFilter(query.getFilter());
-    partitionQuery.setFields(query.getFields());
-    partitionQuery.setKeyRange(query.getStartKey(),query.getEndKey());
-    partitionQueries.add(partitionQuery);
+
+    for(int i=0; i<getClient().getCache().size()/partitionSize; i++) {
+
+      // build query
+      InfinispanPartitionQuery<K, T> partitionQuery = new InfinispanPartitionQuery<K, T>((InfinispanStore<K, T>) query.getDataStore());
+      partitionQuery.setFilter(query.getFilter());
+      partitionQuery.setFields(query.getFields());
+      partitionQuery.setKeyRange(query.getStartKey(), query.getEndKey());
+      partitionQuery.build();
+      partitionQuery.setOffset(i * partitionSize);
+      partitionQuery.setLimit(partitionSize);
+
+      // add to the list
+      partitionQueries.add(partitionQuery);
+
+    }
+
     return partitionQueries;
   }
 

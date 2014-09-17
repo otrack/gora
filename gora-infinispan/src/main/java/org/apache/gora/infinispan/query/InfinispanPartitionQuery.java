@@ -5,15 +5,14 @@ import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.gora.query.PartitionQuery;
 
 /**
- * Fake partition-aware query.
- * TODO implement a true partition query.
+ * A wrapper around an InfinispanQuery, making it partition-aware.
  *
  * @author Pierre Sutra, valerio schiavoni
  *
  */
 public class InfinispanPartitionQuery<K,T extends PersistentBase> extends InfinispanQuery<K,T> implements PartitionQuery<K,T> {
 
-    private static final String[] location={"local"};
+    private static final String[] location={"local"}; // FIXME purpose of this field is unclear.
 
     public InfinispanPartitionQuery(){
     }

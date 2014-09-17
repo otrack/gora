@@ -38,8 +38,8 @@ public class InfinispanClient<K, T extends PersistentBase> {
 
   private static final String HOTROD_HOST_KEY = "hotrod.host";
   private static final String HOTROD_PORT_KEY = "hotrod.port";
-  private static final String HOTROD_DEFAULT_HOST = "127.0.0.1";
-  private static final String HOTROD_DEFAULT_PORT = "15233";
+  private static final String HOTROD_HOST_DEFAULT = "127.0.0.1";
+  private static final String HOTROD_PORT_DEFAULT = "15233";
 
   private Class<K> keyClass;
   private Class<T> persistentClass;
@@ -54,8 +54,9 @@ public class InfinispanClient<K, T extends PersistentBase> {
 
     System.out.println(properties.toString());
 
-    String host = properties.getProperty(HOTROD_HOST_KEY,HOTROD_DEFAULT_HOST);
-    int port = Integer.valueOf(properties.getProperty(HOTROD_PORT_KEY, HOTROD_DEFAULT_PORT));
+    String host = properties.getProperty(HOTROD_HOST_KEY, HOTROD_HOST_DEFAULT);
+    int port = Integer.valueOf(properties.getProperty(HOTROD_PORT_KEY,
+      HOTROD_PORT_DEFAULT));
 
     LOG.info("Initializing InfinispanClient with "+host+":"+port);
 
