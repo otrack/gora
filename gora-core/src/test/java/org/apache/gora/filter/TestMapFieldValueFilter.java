@@ -17,7 +17,6 @@
  */
 package org.apache.gora.filter;
 
-import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.hadoop.io.WritableUtils;
 import org.junit.Test;
@@ -38,7 +37,7 @@ public class TestMapFieldValueFilter {
     filter.setMapKey("fetchTime");
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
-    filter.getOperands().add(new Utf8("http://example.org"));
+    filter.getOperands().add("http://example.org");
     byte[] byteArray = WritableUtils.toByteArray(filter);
     MapFieldValueFilter<String, WebPage> filter2 = new MapFieldValueFilter<String, WebPage>();
     filter2.readFields(new DataInputStream(new ByteArrayInputStream(byteArray)));
@@ -57,12 +56,12 @@ public class TestMapFieldValueFilter {
     filter.setMapKey("example");
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
-    filter.getOperands().add(new Utf8("http://example.org"));
+    filter.getOperands().add("http://example.org");
     
     WebPage page = WebPage.newBuilder().build();
-    page.getOutlinks().put(new Utf8("example"), new Utf8("http://example.org"));
+    page.getOutlinks().put("example", "http://example.org");
     assertFalse(filter.filter("irrelevant", page));
-    page.getOutlinks().put(new Utf8("example"), new Utf8("http://example2.com"));
+    page.getOutlinks().put("example", "http://example2.com");
     assertTrue(filter.filter("irrelevant", page));
     page = new WebPage();
     assertTrue(filter.filter("irrelevant", page));
@@ -79,13 +78,14 @@ public class TestMapFieldValueFilter {
     filter.setMapKey("foobar.whatever");
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
-    filter.getOperands().add(new Utf8("Click here for foobar!"));
+    filter.getOperands().add("Click here for foobar!");
     
     WebPage page = WebPage.newBuilder().build();
     assertTrue(filter.filter("irrelevant", page));
-    page.getOutlinks().put(new Utf8("foobar.whatever"), new Utf8("Mismatch!"));
+    page.getOutlinks().put("foobar.whatever", "Mismatch!");
     assertTrue(filter.filter("irrelevant", page));
-    page.getOutlinks().put(new Utf8("foobar.whatever"), new Utf8("Click here for foobar!"));
+    page.getOutlinks().put("foobar.whatever",
+      "Click here for foobar!");
     assertFalse(filter.filter("irrelevant", page));
   }
 

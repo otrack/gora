@@ -21,7 +21,6 @@ package org.apache.gora.mapreduce;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.WebPageDataCreator;
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.WebPage;
@@ -68,7 +67,7 @@ public class TestPersistentSerialization {
   @Test
   public void testSerdeEmployeeOneField() throws Exception {
     Employee employee = Employee.newBuilder().build();
-    employee.setSsn(new Utf8("11111"));
+    employee.setSsn("11111");
 
     TestIOUtils.testSerializeDeserialize(employee);
   }
@@ -82,7 +81,7 @@ public class TestPersistentSerialization {
   @Test
   public void testSerdeEmployeeTwoFields() throws Exception {
     Employee employee = Employee.newBuilder().build();
-    employee.setSsn(new Utf8("11111"));
+    employee.setSsn("11111");
     employee.setSalary(100);
 
     TestIOUtils.testSerializeDeserialize(employee);
@@ -130,13 +129,13 @@ public class TestPersistentSerialization {
     WebPage page2 = WebPage.newBuilder().build();
     WebPage page3 = WebPage.newBuilder().build();
 
-    page1.setUrl(new Utf8("foo"));
-    page2.setUrl(new Utf8("baz"));
-    page3.setUrl(new Utf8("bar"));
-    page1.setParsedContent(new ArrayList<CharSequence>());
-    page1.getParsedContent().add(new Utf8("coo"));
-    page2.setOutlinks(new HashMap<CharSequence, CharSequence>());
-    page2.getOutlinks().put(new Utf8("a"), new Utf8("b"));
+    page1.setUrl("foo");
+    page2.setUrl("baz");
+    page3.setUrl("bar");
+    page1.setParsedContent(new ArrayList<String>());
+    page1.getParsedContent().add("coo");
+    page2.setOutlinks(new HashMap<String, String>());
+    page2.getOutlinks().put("a", "b");
 
     TestIOUtils.testSerializeDeserialize(page1, page2, page3);
   }

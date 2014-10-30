@@ -46,4 +46,9 @@ public class InfinispanResult<K, T extends PersistentBase> extends ResultBase<K,
     return true;
   }
 
+  @Override
+  protected void clear() {
+    // do nothing
+  }
+
 }

@@ -6,7 +6,7 @@
 package org.apache.gora.examples.generated;  
 @SuppressWarnings("all")
 public class Metadata extends org.apache.gora.persistency.impl.PersistentBase implements org.apache.avro.specific.SpecificRecord, org.apache.gora.persistency.Persistent {
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Metadata\",\"namespace\":\"org.apache.gora.examples.generated\",\"fields\":[{\"name\":\"version\",\"type\":\"int\",\"default\":0},{\"name\":\"data\",\"type\":{\"type\":\"map\",\"values\":\"string\"},\"default\":{}}]}");
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Metadata\",\"namespace\":\"org.apache.gora.examples.generated\",\"fields\":[{\"name\":\"version\",\"type\":\"int\",\"default\":0},{\"name\":\"data\",\"type\":{\"type\":\"map\",\"values\":{\"type\":\"string\",\"avro.java.string\":\"String\"},\"avro.java.string\":\"String\"},\"default\":{}}]}");
 
   /** Enum containing all data bean's fields. */
   public static enum Field {
@@ -63,7 +63,7 @@ public class Metadata extends org.apache.gora.persistency.impl.PersistentBase im
   }
 
   private int version;
-  private java.util.Map<java.lang.CharSequence,java.lang.CharSequence> data;
+  private java.util.Map<java.lang.String,java.lang.String> data;
   public org.apache.avro.Schema getSchema() { return SCHEMA$; }
   // Used by DatumWriter.  Applications should not call. 
   public java.lang.Object get(int field$) {
@@ -79,7 +79,7 @@ public class Metadata extends org.apache.gora.persistency.impl.PersistentBase im
   public void put(int field$, java.lang.Object value) {
     switch (field$) {
     case 0: version = (java.lang.Integer)(value); break;
-    case 1: data = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>)((value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)value)); break;
+    case 1: data = (java.util.Map<java.lang.String,java.lang.String>)((value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)value)); break;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -111,7 +111,7 @@ public class Metadata extends org.apache.gora.persistency.impl.PersistentBase im
   /**
    * Gets the value of the 'data' field.
    */
-  public java.util.Map<java.lang.CharSequence,java.lang.CharSequence> getData() {
+  public java.util.Map<java.lang.String,java.lang.String> getData() {
     return data;
   }
 
@@ -119,7 +119,7 @@ public class Metadata extends org.apache.gora.persistency.impl.PersistentBase im
    * Sets the value of the 'data' field.
    * @param value the value to set.
    */
-  public void setData(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
+  public void setData(java.util.Map<java.lang.String,java.lang.String> value) {
     this.data = (value instanceof org.apache.gora.persistency.Dirtyable) ? value : new org.apache.gora.persistency.impl.DirtyMapWrapper(value);
     setDirty(1);
   }
@@ -128,7 +128,7 @@ public class Metadata extends org.apache.gora.persistency.impl.PersistentBase im
    * Checks the dirty status of the 'data' field. A field is dirty if it represents a change that has not yet been written to the database.
    * @param value the value to set.
    */
-  public boolean isDataDirty(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
+  public boolean isDataDirty(java.util.Map<java.lang.String,java.lang.String> value) {
     return isDirty(1);
   }
 
@@ -177,7 +177,7 @@ public class Metadata extends org.apache.gora.persistency.impl.PersistentBase im
     implements org.apache.avro.data.RecordBuilder<Metadata> {
 
     private int version;
-    private java.util.Map<java.lang.CharSequence,java.lang.CharSequence> data;
+    private java.util.Map<java.lang.String,java.lang.String> data;
 
     /** Creates a new Builder */
     private Builder() {
@@ -197,7 +197,7 @@ public class Metadata extends org.apache.gora.persistency.impl.PersistentBase im
         fieldSetFlags()[0] = true;
       }
       if (isValidValue(fields()[1], other.data)) {
-        this.data = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) data().deepCopy(fields()[1].schema(), other.data);
+        this.data = (java.util.Map<java.lang.String,java.lang.String>) data().deepCopy(fields()[1].schema(), other.data);
         fieldSetFlags()[1] = true;
       }
     }
@@ -227,12 +227,12 @@ public class Metadata extends org.apache.gora.persistency.impl.PersistentBase im
     }
     
     /** Gets the value of the 'data' field */
-    public java.util.Map<java.lang.CharSequence,java.lang.CharSequence> getData() {
+    public java.util.Map<java.lang.String,java.lang.String> getData() {
       return data;
     }
     
     /** Sets the value of the 'data' field */
-    public org.apache.gora.examples.generated.Metadata.Builder setData(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
+    public org.apache.gora.examples.generated.Metadata.Builder setData(java.util.Map<java.lang.String,java.lang.String> value) {
       validate(fields()[1], value);
       this.data = value;
       fieldSetFlags()[1] = true;
@@ -256,7 +256,7 @@ public class Metadata extends org.apache.gora.persistency.impl.PersistentBase im
       try {
         Metadata record = new Metadata();
         record.version = fieldSetFlags()[0] ? this.version : (java.lang.Integer) defaultValue(fields()[0]);
-        record.data = fieldSetFlags()[1] ? this.data : (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)defaultValue(fields()[1]));
+        record.data = fieldSetFlags()[1] ? this.data : (java.util.Map<java.lang.String,java.lang.String>) new org.apache.gora.persistency.impl.DirtyMapWrapper((java.util.Map)defaultValue(fields()[1]));
         return record;
       } catch (Exception e) {
         throw new org.apache.avro.AvroRuntimeException(e);
@@ -304,7 +304,7 @@ public class Metadata extends org.apache.gora.persistency.impl.PersistentBase im
 				  /**
 	   * Gets the value of the 'data' field.
 		   */
-	  public java.util.Map<java.lang.CharSequence,java.lang.CharSequence> getData() {
+	  public java.util.Map<java.lang.String,java.lang.String> getData() {
 	    throw new java.lang.UnsupportedOperationException("Get is not supported on tombstones");
 	  }
 	
@@ -312,7 +312,7 @@ public class Metadata extends org.apache.gora.persistency.impl.PersistentBase im
 	   * Sets the value of the 'data' field.
 		   * @param value the value to set.
 	   */
-	  public void setData(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
+	  public void setData(java.util.Map<java.lang.String,java.lang.String> value) {
 	    throw new java.lang.UnsupportedOperationException("Set is not supported on tombstones");
 	  }
 	  
@@ -320,7 +320,7 @@ public class Metadata extends org.apache.gora.persistency.impl.PersistentBase im
 	   * Checks the dirty status of the 'data' field. A field is dirty if it represents a change that has not yet been written to the database.
 		   * @param value the value to set.
 	   */
-	  public boolean isDataDirty(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
+	  public boolean isDataDirty(java.util.Map<java.lang.String,java.lang.String> value) {
 	    throw new java.lang.UnsupportedOperationException("IsDirty is not supported on tombstones");
 	  }
 	

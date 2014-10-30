@@ -17,15 +17,15 @@
  */
 package org.apache.gora.store;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Properties;
-
 import org.apache.gora.persistency.BeanFactory;
 import org.apache.gora.persistency.Persistent;
 import org.apache.gora.query.PartitionQuery;
 import org.apache.gora.query.Query;
 import org.apache.gora.query.Result;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * DataStore handles actual object persistence. Objects can be persisted,
@@ -146,6 +146,11 @@ public interface DataStore<K, T extends Persistent> {
    * <a href="#visibility">visibility</a>.
    */
   void put(K key, T obj);
+
+  /**
+   * Inserts the object only if it was not existing previously.
+   */
+  void putIfAbsent(K key, T obj);
 
   /**
    * Deletes the object with the given key

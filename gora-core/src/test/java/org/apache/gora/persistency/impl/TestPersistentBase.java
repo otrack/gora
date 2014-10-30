@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import org.apache.avro.Schema.Field;
-import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.memory.store.MemStore;
@@ -112,9 +111,9 @@ public class TestPersistentBase {
     //test clear all fields
     WebPage page = WebPage.newBuilder().build();
    
-    page.setUrl(new Utf8("http://foo.com"));
-    page.getParsedContent().add(new Utf8("foo"));
-    page.getOutlinks().put(new Utf8("foo"), new Utf8("bar"));
+    page.setUrl("http://foo.com");
+    page.getParsedContent().add("foo");
+    page.getOutlinks().put("foo", "bar");
     page.setContent(ByteBuffer.wrap("foo baz bar".getBytes()));
     
     page.clear();
@@ -125,9 +124,9 @@ public class TestPersistentBase {
     assertNull(page.getContent());
     
     //set fields again
-    page.setUrl(new Utf8("http://bar.com"));
-    page.getParsedContent().add(new Utf8("bar"));
-    page.getOutlinks().put(new Utf8("bar"), new Utf8("baz"));
+    page.setUrl("http://bar.com");
+    page.getParsedContent().add("bar");
+    page.getOutlinks().put("bar", "baz");
     page.setContent(ByteBuffer.wrap("foo baz bar barbaz".getBytes()));
     
     //test clear new object

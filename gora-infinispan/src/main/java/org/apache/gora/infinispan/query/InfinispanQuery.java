@@ -2,15 +2,11 @@ package org.apache.gora.infinispan.query;
 
 import org.apache.gora.filter.MapFieldValueFilter;
 import org.apache.gora.filter.SingleFieldValueFilter;
-import org.apache.gora.infinispan.store.InfinispanClient;
 import org.apache.gora.infinispan.store.InfinispanStore;
 import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.gora.query.impl.QueryBase;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.QueryBuilder;
-import org.infinispan.query.dsl.QueryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,10 +21,8 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
 
   public static final Logger LOG = LoggerFactory.getLogger(InfinispanQuery.class);
 
-  private QueryFactory qf;
-  private org.infinispan.query.dsl.Query q;
   private QueryBuilder qb;
-  private String primaryFieldName;
+  private org.infinispan.query.dsl.Query q;
 
   public InfinispanQuery(){
     super(null);
@@ -36,7 +30,6 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
 
   public InfinispanQuery(InfinispanStore<K, T> dataStore) {
     super(dataStore);
-
   }
 
   public void build(){
@@ -44,10 +37,12 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
     FilterConditionContext context = null;
 
     if(qb==null)
-      init();
+      qb = ((InfinispanStore<K,T>)dataStore).getClient().getQueryBuilder();
 
-    if(q!=null)
-      throw new IllegalAccessError("Query already built; ignoring");
+    if(q!=null) {
+      LOG.info("Query already built; ignoring.");
+      return;
+    }
 
     if (filter instanceof  MapFieldValueFilter){
       MapFieldValueFilter mfilter = (MapFieldValueFilter) filter;
@@ -98,21 +93,24 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
     }
 
     if (this.startKey==this.endKey && this.startKey != null ){
-      (context == null ? qb : context.and()).having(primaryFieldName).eq(this.startKey);
+      (context == null ? qb : context.and()).having(getPrimaryFieldName()).eq(this.startKey);
     }else{
       if (this.startKey!=null && this.endKey!=null)
-        context = (context == null ? qb : context.and()).having(primaryFieldName).between(this.startKey,this.endKey);
+        context = (context == null ? qb : context.and()).having(getPrimaryFieldName()).between(this.startKey,this.endKey);
       else if (this.startKey!=null)
-        context = (context == null ? qb : context.and()).having(primaryFieldName).between(this.startKey,null);
+        context = (context == null ? qb : context.and()).having(getPrimaryFieldName()).between(this.startKey,null);
       else if (this.endKey!=null)
-        (context == null ? qb : context.and()).having(primaryFieldName).between(null,this.endKey);
+        (context == null ? qb : context.and()).having(getPrimaryFieldName()).between(null,this.endKey);
     }
 
     qb.maxResults((int) this.getLimit());
 
-    String []fieldsWithPrimary = Arrays.copyOf(fields, fields.length + 1);
-    fieldsWithPrimary[fields.length] = primaryFieldName;
-    qb.setProjection(fieldsWithPrimary);
+    // if projection enabled, keep the primary field.
+    if (fields!=null && fields.length > 0) {
+      String[] fieldsWithPrimary = Arrays.copyOf(fields, fields.length + 1);
+      fieldsWithPrimary[fields.length] = getPrimaryFieldName();
+      qb.setProjection(fieldsWithPrimary);
+    }
 
     qb.startOffset(this.getOffset());
 
@@ -129,12 +127,6 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
     return q.getResultSize();
   }
 
-  private void init(){
-    InfinispanClient<K,T> client = ((InfinispanStore<K,T>)dataStore).getClient();
-    primaryFieldName = ((InfinispanStore<K,T>)dataStore).getPrimaryFieldName();
-    RemoteCache<K,T> remoteCache = client.getCache();
-    qf = Search.getQueryFactory(remoteCache);
-    qb = qf.from(dataStore.getPersistentClass());
-  }
+  public String getPrimaryFieldName(){ return ((InfinispanStore)dataStore).getPrimaryFieldName();}
 
 }

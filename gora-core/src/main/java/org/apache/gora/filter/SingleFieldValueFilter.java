@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A filter that checks for a single field in the persistent.
+ * A filter that checks for a single field in the persistent store.
  * 
  * @param <K>
  * @param <T>
@@ -52,12 +52,6 @@ public class SingleFieldValueFilter<K, T extends PersistentBase> implements Filt
     WritableUtils.writeVInt(out, operands.size());
     for (int i = 0; i < operands.size(); i++) {
       Object operand = operands.get(i);
-      if (operand instanceof String) {
-        throw new IllegalStateException("Use Utf8 instead of String for operands");
-      }
-      if (operand instanceof Utf8) {
-        operand=operand.toString();
-      }
       if (operand instanceof Boolean) {
         ObjectWritable.writeObject(out, operand, Boolean.TYPE, conf);
       } else if (operand instanceof Character) {

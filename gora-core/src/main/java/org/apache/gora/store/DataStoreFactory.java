@@ -44,6 +44,10 @@ public class DataStoreFactory{
 
   public static final String GORA_DEFAULT_DATASTORE_KEY = "gora.datastore.default";
 
+  public static final String GORA_CONNECTION_STRING_KEY = "gora.datastore.connectionstring";
+
+  public static final String GORA_CONNECTION_STRING_DEFAULT = "127.0.0.1";
+
   public static final String GORA = "gora";
 
   public static final String DATASTORE = "datastore";

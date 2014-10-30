@@ -44,8 +44,8 @@ import java.io.IOException;
  * Base class for Query implementations.
  */
 public abstract class QueryBase<K, T extends PersistentBase>
-    implements Query<K,T>, Writable, Configurable {
-	
+  implements Query<K,T>, Writable, Configurable {
+
   protected DataStoreBase<K,T> dataStore;
 
   protected String queryString;
@@ -90,30 +90,38 @@ public abstract class QueryBase<K, T extends PersistentBase>
   }
 
   @Override
-public String[] getFields() {
+  public String[] getFields() {
     return fields;
   }
-  
+
   @Override
   public Filter<K, T> getFilter() {
     return filter;
   }
-  
+
   @Override
   public void setFilter(Filter<K, T> filter) {
     this.filter=filter;
   }
-  
+
   @Override
   public boolean isLocalFilterEnabled() {
     return localFilterEnabled;
   }
-  
+
   @Override
   public void setLocalFilterEnabled(boolean enable) {
     this.localFilterEnabled=enable;
   }
-  
+
+  public String getQueryString(){
+    return queryString;
+  }
+
+  public void setQueryString(String queryString){
+    this.queryString = queryString;
+  }
+
   @Override
   public void setKey(K key) {
     setKeyRange(key, key);
@@ -245,6 +253,7 @@ public String[] getFields() {
         filter = (Filter<K, T>) ReflectionUtils.newInstance(ClassLoadingUtils.loadClass(filterClass), conf);
         filter.readFields(in);
       } catch (ClassNotFoundException e) {
+        e.printStackTrace();
         throw new IOException(e);
       }
     }
@@ -252,17 +261,18 @@ public String[] getFields() {
     startTime = WritableUtils.readVLong(in);
     endTime = WritableUtils.readVLong(in);
     limit = WritableUtils.readVLong(in);
-    localFilterEnabled = in.readBoolean(); 
+    offset = WritableUtils.readVInt(in);
+    localFilterEnabled = in.readBoolean();
   }
 
-  //@Override
+  @Override
   public void write(DataOutput out) throws IOException {
     //write datastore
     Text.writeString(out, dataStore.getClass().getCanonicalName());
     dataStore.write(out);
 
     IOUtils.writeNullFieldsInfo(out, queryString, (fields)
-        , startKey, endKey, filter);
+      , startKey, endKey, filter);
 
     if(queryString != null)
       Text.writeString(out, queryString);
@@ -280,6 +290,7 @@ public String[] getFields() {
     WritableUtils.writeVLong(out, getStartTime());
     WritableUtils.writeVLong(out, getEndTime());
     WritableUtils.writeVLong(out, getLimit());
+    WritableUtils.writeVInt(out ,getOffset());
     out.writeBoolean(localFilterEnabled);
   }
 
@@ -296,6 +307,7 @@ public String[] getFields() {
       builder.append(endKey, that.endKey);
       builder.append(filter, that.filter);
       builder.append(limit, that.limit);
+      builder.append(offset, that.offset);
       builder.append(localFilterEnabled, that.localFilterEnabled);
       return builder.isEquals();
     }
@@ -312,6 +324,7 @@ public String[] getFields() {
     builder.append(endKey);
     builder.append(filter);
     builder.append(limit);
+    builder.append(offset);
     builder.append(localFilterEnabled);
     return builder.toHashCode();
   }
@@ -325,6 +338,7 @@ public String[] getFields() {
     builder.append("endKey", endKey);
     builder.append("filter", filter);
     builder.append("limit", limit);
+    builder.append("offset", offset);
     builder.append("localFilterEnabled", localFilterEnabled);
 
     return builder.toString();

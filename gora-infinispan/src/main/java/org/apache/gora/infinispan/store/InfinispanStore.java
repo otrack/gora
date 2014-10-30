@@ -36,27 +36,24 @@ import java.util.Properties;
 
 /**
  * {@link org.apache.gora.infinispan.store.InfinispanStore} is the primary class
- * responsible for directing Gora CRUD operations into Infinispan. We (delegate) rely
- * heavily on {@link org.apache.gora.infinispan.store.InfinispanClient} for many operations
- * such as initialization, creating and deleting schemas (Infinispan caches), etc.
+ * responsible for directing Gora CRUD operations into Infinispan.
+ * This class delegate most operations, e.g., initialization, creating and deleting schemas (Infinispan caches),
+ * to {@link org.apache.gora.infinispan.store.InfinispanClient},
  *
- * @author Pierre Sutra, valerio schiavoni
+ * @author Pierre Sutra, Valerio Schiavoni
  *
  */
 public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<K, T> {
 
-  /**
-   * Logging implementation
-   */
   public static final Logger LOG = LoggerFactory.getLogger(InfinispanStore.class);
 
   /**
    * Infinispan store Parameters
    */
-  private static final String PARTITION_SIZE_DEFAULT = "1"; // for testing purposes only ( a well-known working value for M/R is 1000).
-  private static final String PARTITION_SIZE_KEY = "hotrod.partition.size";
+  private static final String PARTITION_SIZE_DEFAULT = "10000"; // for testing purposes only ( a well-known working value for M/R is 1000).
+  private static final String PARTITION_SIZE_KEY = "infinispan.partition.size";
 
-  private InfinispanClient<K, T> infinispanClient = new InfinispanClient<K, T>();
+  private InfinispanClient<K, T> infinispanClient;
   private String primaryFieldName;
   private int primaryFieldPos;
   private int partitionSize;
@@ -73,11 +70,13 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
     try {
 
       if (primaryFieldName!=null) {
-        LOG.info("Already initialized; ignoring.");
+        LOG.info("Client already initialized; ignoring.");
         return;
       }
 
       super.initialize(keyClass, persistentClass, properties);
+      infinispanClient  = new InfinispanClient<>();
+      infinispanClient.setConf(conf);
 
       LOG.info("InfinispanStore initializing with key class: "
         + keyClass.getCanonicalName()
@@ -87,15 +86,15 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
       primaryFieldPos = 0;
       primaryFieldName = schema.getFields().get(0).name();
-      LOG.warn("Primary key for this schema is \""+primaryFieldName+"\".");
       this.infinispanClient.initialize(keyClass, persistentClass, properties);
 
-      partitionSize = Integer.valueOf(properties.getProperty(PARTITION_SIZE_KEY,PARTITION_SIZE_DEFAULT));
+      partitionSize = Integer.valueOf(
+        properties.getProperty(PARTITION_SIZE_KEY,
+          getConf().get(PARTITION_SIZE_KEY,PARTITION_SIZE_DEFAULT)));
       LOG.info("Partition query size set to "+partitionSize);
 
     } catch (Exception e) {
       LOG.error(e.getMessage());
-      LOG.error(e.getStackTrace().toString());
       e.printStackTrace();
     }
   }
@@ -108,7 +107,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
   @Override
   public void createSchema() {
-    LOG.debug("creating Infinispan keyspace");
+    LOG.debug("creating Infinispan cache");
     this.infinispanClient.createCache();
   }
 
@@ -144,14 +143,14 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
   @Override
   public T get(K key){
-    return infinispanClient.getInCache(key);
+    return infinispanClient.get(key);
   }
 
   @Override
   public T get(K key, String[] fields) {
 
     if (fields==null)
-      return infinispanClient.getInCache(key);
+      return infinispanClient.get(key);
 
     InfinispanQuery query = new InfinispanQuery(this);
     query.setKey(key);
@@ -172,21 +171,25 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
     throws IOException {
 
     List<PartitionQuery<K,T>> partitionQueries = new ArrayList<PartitionQuery<K, T>>();
+    InfinispanPartitionQuery<K,T> partitionQuery;
 
     for(int i=0; i<getClient().getCache().size()/partitionSize; i++) {
 
       // build query
-      InfinispanPartitionQuery<K, T> partitionQuery = new InfinispanPartitionQuery<K, T>((InfinispanStore<K, T>) query.getDataStore());
-      partitionQuery.setFilter(query.getFilter());
-      partitionQuery.setFields(query.getFields());
-      partitionQuery.setKeyRange(query.getStartKey(), query.getEndKey());
-      partitionQuery.build();
+      partitionQuery = new InfinispanPartitionQuery<>((InfinispanQuery<K, T>) query);
       partitionQuery.setOffset(i * partitionSize);
       partitionQuery.setLimit(partitionSize);
+      partitionQuery.build();
 
       // add to the list
       partitionQueries.add(partitionQuery);
 
+    }
+
+    if (partitionQueries.size()==0) {
+      partitionQuery = new InfinispanPartitionQuery<>((InfinispanQuery<K, T>) query);
+      partitionQuery.build();
+      partitionQueries.add(partitionQuery);
     }
 
     return partitionQueries;
@@ -215,24 +218,36 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
   }
 
   @Override
-  public void put(K key, T value) {
+  public void put(K key, T obj) {
 
-    LOG.info("put "+key.toString()+"=>"+value.toString());
+    LOG.info("put " + key.toString() + "=>" + obj.toString());
 
-    if (value.get(primaryFieldPos)==null)
-      value.put(primaryFieldPos,key);
+    if (obj.get(primaryFieldPos)==null)
+      obj.put(primaryFieldPos,key);
 
-    if (!value.get(primaryFieldPos).equals(key) )
+    if (!obj.get(primaryFieldPos).equals(key) )
       LOG.warn("Invalid or different primary field !");
 
-    this.infinispanClient.putInCache(key, value);
+    this.infinispanClient.put(key, obj);
   }
 
-  /**
-   * Simple method to check if a an Infinispan Keyspace exists.
-   *
-   * @return true if a Keyspace exists.
-   */
+  @Override
+  public void putIfAbsent(K key, T obj){
+
+    LOG.info("putIfabsent " + key.toString() + "=>" + obj.toString());
+
+    if (obj.get(primaryFieldPos)==null)
+      obj.put(primaryFieldPos,key);
+
+    if (!obj.get(primaryFieldPos).equals(key) )
+      LOG.warn("Invalid or different primary field !");
+
+    this.infinispanClient.putifabsent(key, obj);
+
+
+
+  }
+
   @Override
   public boolean schemaExists() {
     LOG.info("schema exists");
@@ -258,4 +273,5 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
   public void setPrimaryFieldPos(int p){
     primaryFieldPos = p;
   }
+
 }

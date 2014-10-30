@@ -18,7 +18,7 @@ public abstract class InfinispanStoreMapReduceAbstractTest extends DataStoreMapR
 
     public InfinispanStoreMapReduceAbstractTest() throws IOException {
         super();
-        driver = new GoraInfinispanTestDriver();
+        driver = new GoraInfinispanTestDriver(3);
     }
 
     @Override

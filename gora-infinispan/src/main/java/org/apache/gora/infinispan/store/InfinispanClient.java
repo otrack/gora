@@ -18,61 +18,74 @@
 
 package org.apache.gora.infinispan.store;
 
-import org.apache.avro.Schema;
 import org.apache.gora.persistency.impl.PersistentBase;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.apache.gora.util.ClassLoadingUtils;
+import org.apache.hadoop.conf.Configurable;
+import org.apache.hadoop.conf.Configuration;
+import org.infinispan.commons.api.BasicCache;
+import org.infinispan.ensemble.EnsembleCacheManager;
+import org.infinispan.ensemble.Site;
+import org.infinispan.ensemble.cache.EnsembleCache;
+import org.infinispan.ensemble.cache.distributed.ClusteringBasedPartitioner;
+import org.infinispan.ensemble.cache.distributed.Coordinates;
+import org.infinispan.ensemble.cache.distributed.Partitioner;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.query.dsl.QueryBuilder;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.avro.AvroMarshaller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+
+import static org.apache.gora.store.DataStoreFactory.GORA_CONNECTION_STRING_DEFAULT;
+import static org.apache.gora.store.DataStoreFactory.GORA_CONNECTION_STRING_KEY;
 
 /*
  * * @author Pierre Sutra, valerio schiavoni
  */
-public class InfinispanClient<K, T extends PersistentBase> {
+public class InfinispanClient<K, T extends PersistentBase> implements
+  Configurable{
 
   public static final Logger LOG = LoggerFactory.getLogger(InfinispanClient.class);
+  public static final String INFINISPAN_PARTITIONER_KEY = "infinispan.partitioner.class";
+  public static final String INFINISPAN_PARTITIONER_DEFAULT = "org.infinispan.ensemble.cache.distributed.HashBasedPartitioner";
 
-  private static final String HOTROD_HOST_KEY = "hotrod.host";
-  private static final String HOTROD_PORT_KEY = "hotrod.port";
-  private static final String HOTROD_HOST_DEFAULT = "127.0.0.1";
-  private static final String HOTROD_PORT_DEFAULT = "15233";
+  private Configuration conf;
 
   private Class<K> keyClass;
   private Class<T> persistentClass;
-  private RemoteCacheManager cacheManager;
-  private Schema schema;
+  private EnsembleCacheManager cacheManager;
+  private QueryFactory qf;
 
-  private RemoteCache<K, T> cache;
+  private BasicCache<K, T> cache;
   private boolean cacheExists;
 
-  public void initialize(Class<K> keyClass, Class<T> persistentClass,
-    Properties properties) throws Exception {
+  public InfinispanClient() {
+    conf = new Configuration();
+  }
 
-    System.out.println(properties.toString());
+  public void initialize(Class<K> keyClass, Class<T> persistentClass, Properties properties) throws Exception {
 
-    String host = properties.getProperty(HOTROD_HOST_KEY, HOTROD_HOST_DEFAULT);
-    int port = Integer.valueOf(properties.getProperty(HOTROD_PORT_KEY,
-      HOTROD_PORT_DEFAULT));
-
-    LOG.info("Initializing InfinispanClient with "+host+":"+port);
+    String host = properties.getProperty(GORA_CONNECTION_STRING_KEY,
+      getConf().get(GORA_CONNECTION_STRING_KEY,GORA_CONNECTION_STRING_DEFAULT));
+    LOG.info("Connecting client to "+host);
 
     this.keyClass = keyClass;
     this.persistentClass = persistentClass;
-    this.schema = persistentClass.newInstance().getSchema();
+    AvroMarshaller<T> marshaller = new AvroMarshaller<T>(persistentClass);
+    cacheManager = new EnsembleCacheManager(host,marshaller);
 
-    ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-    clientBuilder
-      .addServer()
-      .host(host)
-      .port(port)
-      .marshaller(new AvroMarshaller<T>(persistentClass));
-    cacheManager = new RemoteCacheManager(clientBuilder.build(), true);
-    cacheManager.start();
-    cache = cacheManager.getCache(); // FIXME
+    cache = cacheManager.getCache(
+      CacheContainer.DEFAULT_CACHE_NAME,
+      new ArrayList<>(cacheManager.sites()),
+      true,
+      createPartitioner(properties));
+    qf = org.infinispan.ensemble.search.Search.getQueryFactory((EnsembleCache)cache);
+
   }
 
   public boolean cacheExists() {
@@ -86,9 +99,6 @@ public class InfinispanClient<K, T extends PersistentBase> {
     cacheExists = true; // FIXME
   }
 
-  /**
-   * Drop keyspace.
-   */
   public void dropCache() {
     cacheExists = false; // FIXME
     cache.clear();
@@ -98,28 +108,61 @@ public class InfinispanClient<K, T extends PersistentBase> {
     cache.remove(key);
   }
 
-  public void putInCache(K key, T val) {
+  public void put(K key, T val) {
     this.cache.put(key, val);
   }
 
-  public T getInCache(K key){
+  public void putifabsent(K key, T obj) {
+    this.cache.putIfAbsent(key,obj);
+  }
+
+  public T get(K key){
     return cache.get(key);
   }
 
   public String getCacheName() {
-    return this.keyClass.getName();
+    return this.persistentClass.getSimpleName();
   }
 
-  public RemoteCacheManager getCacheManager() {
-    return cacheManager;
-  }
-
-  public void setCacheManager(RemoteCacheManager cacheManager) {
-    this.cacheManager = cacheManager;
-  }
-
-  public RemoteCache<K, T> getCache() {
+  public BasicCache<K, T> getCache() {
     return this.cache;
+  }
+
+  public QueryBuilder getQueryBuilder() {
+    return qf.from(persistentClass);
+  }
+
+  public Partitioner<K,T> createPartitioner(Properties properties)
+    throws ClassNotFoundException, IllegalAccessException,
+    InstantiationException, NoSuchMethodException, InvocationTargetException {
+
+    Class<Partitioner> partitionerClass = (Class<Partitioner>) ClassLoadingUtils.loadClass(
+      properties.getProperty(INFINISPAN_PARTITIONER_KEY,
+      getConf().get(INFINISPAN_PARTITIONER_KEY,INFINISPAN_PARTITIONER_DEFAULT)));
+    Class[] parameterTypes = new Class[]{List.class};
+    List<EnsembleCache<K,T>> caches = new ArrayList<>();
+    for(Site site : cacheManager.sites())
+         caches.add(site.<K, T>getCache(getCacheName()));
+    Object[] parameters = new Object[]{caches};
+
+    if (ClusteringBasedPartitioner.class.isAssignableFrom(partitionerClass)) {
+      EnsembleCache<K, Coordinates> l = cacheManager.getCache(getCacheName());
+      parameterTypes = new Class[]{List.class, EnsembleCache.class};
+      parameters = new Object[]{caches,l};
+    }
+
+    return partitionerClass.getConstructor(parameterTypes).newInstance(parameters);
+
+  }
+
+  @Override
+  public void setConf(Configuration conf) {
+    this.conf =conf;
+  }
+
+  @Override
+  public Configuration getConf() {
+    return conf;
   }
 
 }

@@ -166,7 +166,7 @@ public class TestHBaseStore extends DataStoreTestBase {
     WebPage page = webPageStore.newPersistent();
     
     // Write webpage data
-    page.setUrl((CharSequence) new Utf8("http://example.com"));
+    page.setUrl("http://example.com");
     byte[] contentBytes = "example content in example.com".getBytes();
     ByteBuffer buff = ByteBuffer.wrap(contentBytes);
     page.setContent(buff);
@@ -198,7 +198,7 @@ public class TestHBaseStore extends DataStoreTestBase {
     WebPage page = webPageStore.newPersistent();
     
     // Write webpage data
-    page.setUrl((CharSequence) new Utf8("http://example.com"));
+    page.setUrl("http://example.com");
     page.setContent(null);     // This won't change internal field status to dirty, so
     page.setDirty("content") ; // need to change it manually
     webPageStore.put("com.example/http", page);

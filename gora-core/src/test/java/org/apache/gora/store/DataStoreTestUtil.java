@@ -19,7 +19,6 @@
 package org.apache.gora.store;
 
 import org.apache.avro.Schema.Field;
-import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.WebPageDataCreator;
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.Metadata;
@@ -75,18 +74,18 @@ public class DataStoreTestUtil {
       DataStore<K, Employee> dataStore) throws IOException, Exception {
 
     Employee employee = Employee.newBuilder().build();
-    employee.setName(new Utf8("Random Joe"));
+    employee.setName("Random Joe");
     employee.setDateOfBirth( System.currentTimeMillis() - 20L *  YEAR_IN_MS );
     employee.setSalary(100000);
-    employee.setSsn(new Utf8("101010101010"));
+    employee.setSsn("101010101010");
     return employee;
   }
 
   private static <K> WebPage createWebPage(DataStore<K, Employee> dataStore) {
     WebPage webpage = WebPage.newBuilder().build();
-    webpage.setUrl(new Utf8("url.."));
+    webpage.setUrl("url..");
     webpage.setContent(ByteBuffer.wrap("test content".getBytes()));
-    webpage.setParsedContent(new ArrayList<CharSequence>());
+    webpage.setParsedContent(new ArrayList<String>());
     Metadata metadata = Metadata.newBuilder().build();
     webpage.setMetadata(metadata);
     return webpage;
@@ -96,10 +95,10 @@ public class DataStoreTestUtil {
       throws IOException, Exception {
 
     Employee employee = Employee.newBuilder().build();
-    employee.setName(new Utf8("Random boss"));
+    employee.setName("Random boss");
     employee.setDateOfBirth(System.currentTimeMillis() - 22L * YEAR_IN_MS);
     employee.setSalary(1000000);
-    employee.setSsn(new Utf8("202020202020"));
+    employee.setSsn("202020202020");
     return employee;
   }
   
@@ -150,7 +149,7 @@ public class DataStoreTestUtil {
     throws IOException, Exception {
     dataStore.createSchema();
     Employee employee = DataStoreTestUtil.createEmployee(dataStore);
-    String ssn = employee.getSsn().toString();
+    String ssn = employee.getSsn();
     dataStore.put(ssn, employee);
     dataStore.flush();
 
@@ -166,7 +165,7 @@ public class DataStoreTestUtil {
     Employee boss = DataStoreTestUtil.createBoss(dataStore);
     employee.setBoss(boss);
     
-    String ssn = employee.getSsn().toString();
+    String ssn = employee.getSsn();
     dataStore.put(ssn, employee);
     dataStore.flush();
     Employee after = dataStore.get(ssn, AvroUtils.getSchemaFieldNames(Employee.SCHEMA$));
@@ -179,11 +178,11 @@ public class DataStoreTestUtil {
       Employee employee = DataStoreTestUtil.createEmployee(dataStore);
       Employee boss = DataStoreTestUtil.createBoss(dataStore);
       Employee uberBoss = DataStoreTestUtil.createBoss(dataStore);
-      uberBoss.setName(new Utf8("Überboss")) ;
+      uberBoss.setName("Überboss") ;
       boss.setBoss(uberBoss) ;
       employee.setBoss(boss) ;
       
-      String ssn = employee.getSsn().toString();
+      String ssn = employee.getSsn();
       dataStore.put(ssn, employee);
       dataStore.flush();
       Employee after = dataStore.get(ssn, AvroUtils.getSchemaFieldNames(Employee.SCHEMA$));
@@ -196,14 +195,14 @@ public class DataStoreTestUtil {
     Employee employee = DataStoreTestUtil.createEmployee(dataStore);
     WebPage webpage = new BeanFactoryImpl<String,WebPage>(String.class,WebPage.class).newPersistent() ;
     
-    webpage.setUrl(new Utf8("url..")) ;
+    webpage.setUrl("url..") ;
     webpage.setContent(ByteBuffer.wrap("test content".getBytes())) ;
-    webpage.setParsedContent(new ArrayList<CharSequence>());
+    webpage.setParsedContent(new ArrayList<String>());
     Metadata metadata = new BeanFactoryImpl<String,Metadata>(String.class,Metadata.class).newPersistent();
     webpage.setMetadata(metadata) ;
     employee.setWebpage(webpage) ;
     
-    String ssn = employee.getSsn().toString();
+    String ssn = employee.getSsn();
    
     dataStore.put(ssn, employee);
     dataStore.flush();
@@ -216,14 +215,14 @@ public class DataStoreTestUtil {
     throws IOException, Exception {
 
     Employee employee = DataStoreTestUtil.createEmployee(dataStore);
-    employee.setBoss(new Utf8("Real boss")) ;
+    employee.setBoss("Real boss") ;
 
-    String ssn = employee.getSsn().toString();
+    String ssn = employee.getSsn();
     dataStore.put(ssn, employee);
     dataStore.flush();
     Employee after = dataStore.get(ssn, AvroUtils.getSchemaFieldNames(Employee.SCHEMA$));
     assertEqualEmployeeObjects(employee, after);
-    assertEquals("Real boss", ((Utf8)after.getBoss()).toString()) ;
+    assertEquals("Real boss", ((String) after.getBoss())) ;
   }
   
   public static void testGetEmployeeNonExisting(DataStore<String, Employee> dataStore)
@@ -239,7 +238,7 @@ public class DataStoreTestUtil {
     employee.setWebpage(webpage);
     Employee boss = createBoss(dataStore);
     employee.setBoss(boss);
-    String ssn = employee.getSsn().toString();
+    String ssn = employee.getSsn();
     dataStore.put(ssn, employee);
     dataStore.flush();
 
@@ -278,16 +277,16 @@ public class DataStoreTestUtil {
     //  }
     //}
     //check name field
-    CharSequence beforeName = employee.getName();
-    CharSequence afterName = after.getName();
+    String beforeName = employee.getName();
+    String afterName = after.getName();
     assertEquals(beforeName, afterName);
     //check dateOfBirth field
     Long beforeDOB = employee.getDateOfBirth();
     Long afterDOB = after.getDateOfBirth();
     assertEquals(beforeDOB, afterDOB);
     //check ssn field
-    CharSequence beforeSsn = employee.getSsn();
-    CharSequence afterSsn = after.getSsn();
+    String beforeSsn = employee.getSsn();
+    String afterSsn = after.getSsn();
     assertEquals(beforeSsn, afterSsn);
     //check salary field
     Integer beforeSalary = employee.getSalary();
@@ -295,7 +294,7 @@ public class DataStoreTestUtil {
     assertEquals(beforeSalary, afterSalary);
     //check boss field
     if (employee.getBoss() != null) {
-      if (employee.getBoss() instanceof Utf8) {
+      if (employee.getBoss() instanceof String) {
         String beforeBoss = employee.getBoss().toString();
         String afterBoss = after.getBoss().toString();
         assertEquals("Boss String field values in UNION should be the same",
@@ -323,24 +322,20 @@ public class DataStoreTestUtil {
    */
   private static void assertEqualWebPageObjects(WebPage beforeWebPage, WebPage afterWebPage) {
     //check url field
-    CharSequence beforeUrl = beforeWebPage.getUrl();
-    CharSequence afterUrl = afterWebPage.getUrl();
+    String beforeUrl = beforeWebPage.getUrl();
+    String afterUrl = afterWebPage.getUrl();
     assertEquals(beforeUrl, afterUrl);
     //check content field
     ByteBuffer beforeContent = beforeWebPage.getContent();
     ByteBuffer afterContent = afterWebPage.getContent();
     assertEquals(beforeContent, afterContent);
     //check parsedContent field
-    List<CharSequence> beforeParsedContent = 
-        (List<CharSequence>) beforeWebPage.getParsedContent();
-    List<CharSequence> afterParsedContent = 
-        (List<CharSequence>) afterWebPage.getParsedContent();
+    List<String> beforeParsedContent =  beforeWebPage.getParsedContent();
+    List<String> afterParsedContent =  afterWebPage.getParsedContent();
     assertEquals(beforeParsedContent, afterParsedContent);
     //check outlinks field
-    Map<CharSequence, CharSequence> beforeOutlinks = 
-        (Map<java.lang.CharSequence,java.lang.CharSequence>) beforeWebPage.getOutlinks();
-    Map<CharSequence, CharSequence> afterOutlinks = 
-        (Map<java.lang.CharSequence,java.lang.CharSequence>) afterWebPage.getOutlinks();
+    Map<String, String> beforeOutlinks = beforeWebPage.getOutlinks();
+    Map<String, String> afterOutlinks = afterWebPage.getOutlinks();
     assertEquals(beforeOutlinks, afterOutlinks);
     //check metadata field
     if (beforeWebPage.get(5) != null) {
@@ -363,8 +358,8 @@ public class DataStoreTestUtil {
     int afterVersion = afterMetadata.getVersion();
     assertEquals(beforeVersion, afterVersion);
     //check data field
-    Map<CharSequence, CharSequence> beforeData = beforeMetadata.getData();
-    Map<CharSequence, CharSequence> afterData =  afterMetadata.getData();
+    Map<String, String> beforeData = beforeMetadata.getData();
+    Map<String, String> afterData =  afterMetadata.getData();
     assertEquals(beforeData, afterData);
   }
 
@@ -383,11 +378,11 @@ public class DataStoreTestUtil {
     long now = System.currentTimeMillis();
 
     Employee employee = dataStore.newPersistent();
-    employee.setName(new Utf8("John Doe"));
+    employee.setName("John Doe");
     employee.setDateOfBirth(now - 20L *  YEAR_IN_MS);
     employee.setSalary(100000);
-    employee.setSsn(new Utf8(ssnStr));
-    dataStore.put(employee.getSsn().toString(), employee);
+    employee.setSsn(ssnStr);
+    dataStore.put(employee.getSsn(), employee);
 
     dataStore.flush();
 
@@ -423,22 +418,22 @@ public class DataStoreTestUtil {
 
     for (int i = 0; i < 5; i++) {
       Employee employee = Employee.newBuilder().build();
-      employee.setName(new Utf8("John Doe " + i));
+      employee.setName("John Doe " + i);
       employee.setDateOfBirth(now - 20L *  YEAR_IN_MS);
       employee.setSalary(100000);
-      employee.setSsn(new Utf8(Long.toString(ssn + i)));
-      dataStore.put(employee.getSsn().toString(), employee);
+      employee.setSsn(Long.toString(ssn + i));
+      dataStore.put(employee.getSsn(), employee);
     }
 
     dataStore.flush();
 
     for (int i = 0; i < 1; i++) {
       Employee employee = Employee.newBuilder().build();
-      employee.setName(new Utf8("John Doe " + (i + 5)));
+      employee.setName("John Doe " + (i + 5));
       employee.setDateOfBirth(now - 18L * YEAR_IN_MS);
       employee.setSalary(120000);
-      employee.setSsn(new Utf8(Long.toString(ssn + i)));
-      dataStore.put(employee.getSsn().toString(), employee);
+      employee.setSsn(Long.toString(ssn + i));
+      dataStore.put(employee.getSsn(), employee);
     }
 
     dataStore.flush();
@@ -447,7 +442,7 @@ public class DataStoreTestUtil {
       String key = Long.toString(ssn + i);
       Employee employee = dataStore.get(key);
       assertEquals(now - 18L * YEAR_IN_MS, employee.getDateOfBirth().longValue()); 
-      assertEquals("John Doe " + (i + 5), employee.getName().toString());
+      assertEquals("John Doe " + (i + 5), employee.getName());
       assertEquals(120000, employee.getSalary().intValue()); 
     }
   }
@@ -479,11 +474,12 @@ public class DataStoreTestUtil {
 
     for (int i = 0; i < urls.length; i++) {
       WebPage webPage = WebPage.newBuilder().build();
-      webPage.setUrl(new Utf8(urls[i]));
+      webPage.setUrl(urls[i]);
       for (parsedContentCount = 0; parsedContentCount < 5; parsedContentCount++) {
-        webPage.getParsedContent().add(new Utf8(parsedContent + i + "," + parsedContentCount));
+        webPage.getParsedContent().add(
+          parsedContent + i + "," + parsedContentCount);
       }
-      dataStore.put(webPage.getUrl().toString(), webPage);
+      dataStore.put(webPage.getUrl(), webPage);
     }
 
     dataStore.flush();
@@ -492,9 +488,10 @@ public class DataStoreTestUtil {
       WebPage webPage = dataStore.get(urls[i]);
       webPage.setContent(ByteBuffer.wrap(ByteUtils.toBytes(content + i)));
       for (parsedContentCount = 5; parsedContentCount < 10; parsedContentCount++) {
-        webPage.getParsedContent().add(new Utf8(parsedContent + i + "," + parsedContentCount));
+        webPage.getParsedContent().add(
+          parsedContent + i + "," + parsedContentCount);
       }
-      dataStore.put(webPage.getUrl().toString(), webPage);
+      dataStore.put(webPage.getUrl(), webPage);
     }
 
     dataStore.flush();
@@ -504,8 +501,8 @@ public class DataStoreTestUtil {
       assertEquals(content + i, ByteUtils.toString( toByteArray(webPage.getContent()) ));
       assertEquals(10, webPage.getParsedContent().size());
       int j = 0;
-      for (CharSequence pc : webPage.getParsedContent()) {
-        assertEquals(parsedContent + i + "," + j, pc.toString());
+      for (String pc : webPage.getParsedContent()) {
+        assertEquals(parsedContent + i + "," + j, pc);
         j++;
       }
     }
@@ -522,11 +519,11 @@ public class DataStoreTestUtil {
     // putting evens
     for (int i = 0; i < urls.length; i++) {
       WebPage webPage = WebPage.newBuilder().build();
-      webPage.setUrl(new Utf8(urls[i]));
+      webPage.setUrl(urls[i]);
       for (int j = 0; j < urls.length; j += 2) {
-        webPage.getOutlinks().put(new Utf8(anchor + j), new Utf8(urls[j]));
+        webPage.getOutlinks().put(anchor + j, urls[j]);
       }
-      dataStore.put(webPage.getUrl().toString(), webPage);
+      dataStore.put(webPage.getUrl(), webPage);
     }
     dataStore.flush();
 
@@ -535,13 +532,13 @@ public class DataStoreTestUtil {
       WebPage webPage = dataStore.get(urls[i]);
       webPage.getOutlinks().clear();
       for (int j = 1; j < urls.length; j += 2) {
-        webPage.getOutlinks().put(new Utf8(anchor + j), new Utf8(urls[j]));
+        webPage.getOutlinks().put(anchor + j, urls[j]);
       }
       // test for double put of same entries
       for (int j = 1; j < urls.length; j += 2) {
-        webPage.getOutlinks().put(new Utf8(anchor + j), new Utf8(urls[j]));
+        webPage.getOutlinks().put(anchor + j, urls[j]);
       }
-      dataStore.put(webPage.getUrl().toString(), webPage);
+      dataStore.put(webPage.getUrl(), webPage);
     }
     dataStore.flush();
 
@@ -549,9 +546,9 @@ public class DataStoreTestUtil {
       WebPage webPage = dataStore.get(urls[i]);
       int count = 0;
       for (int j = 1; j < urls.length; j += 2) {
-        CharSequence link = webPage.getOutlinks().get(new Utf8(anchor + j));
+        String link = webPage.getOutlinks().get(anchor + j);
         assertNotNull(link);
-        assertEquals(urls[j], link.toString());
+        assertEquals(urls[j], link);
         count++;
       }
       assertEquals(count, webPage.getOutlinks().size());
@@ -570,26 +567,26 @@ public class DataStoreTestUtil {
 
     for (int i = 0; i < urls.length; i++) {
       WebPage webPage = WebPage.newBuilder().build();
-      webPage.setUrl(new Utf8(urls[i]));
+      webPage.setUrl(urls[i]);
       //test put for nullable map field 
       // we put data to the 'headers' field which is a Map with default value of 'null'
-      webPage.setHeaders(new HashMap<CharSequence, CharSequence>());
+      webPage.setHeaders(new HashMap<String, String>());
       for (int j = 0; j < headers.length; j += 2) {
-        webPage.getHeaders().put(new Utf8(header + j), new Utf8(headers[j]));
+        webPage.getHeaders().put(header + j, headers[j]);
       }
-      dataStore.put(webPage.getUrl().toString(), webPage);
+      dataStore.put(webPage.getUrl(), webPage);
     }
 
     dataStore.flush();
 
-    for (int i = 0; i < urls.length; i++) {
-      WebPage webPage = dataStore.get(urls[i]);
+    for (String url : urls) {
+      WebPage webPage = dataStore.get(url);
       //webPage.getHeaders().clear(); //TODO clear method does not work
-      webPage.setHeaders(new HashMap<CharSequence, CharSequence>());
+      webPage.setHeaders(new HashMap<String, String>());
       for (int j = 1; j < headers.length; j += 2) {
-        webPage.getHeaders().put(new Utf8(header + j), new Utf8(headers[j]));
+        webPage.getHeaders().put(header + j, headers[j]);
       }
-      dataStore.put(webPage.getUrl().toString(), webPage);
+      dataStore.put(webPage.getUrl(), webPage);
     }
 
     dataStore.flush();
@@ -598,9 +595,9 @@ public class DataStoreTestUtil {
       WebPage webPage = dataStore.get(urls[i]);
       int count = 0;
       for (int j = 1; j < headers.length; j += 2) {
-        CharSequence headerSample = webPage.getHeaders().get(new Utf8(header + j));
+        String headerSample = webPage.getHeaders().get(header + j);
         assertNotNull(headerSample);
-        assertEquals(headers[j], headerSample.toString());
+        assertEquals(headers[j], headerSample);
         count++;
       }
       assertEquals(count, webPage.getHeaders().size());
@@ -617,11 +614,11 @@ public class DataStoreTestUtil {
 
     for (int i = 0; i < urls.length; i++) {
       WebPage webPage = WebPage.newBuilder().build();
-      webPage.setUrl(new Utf8(urls[i]));
+      webPage.setUrl(urls[i]);
       for (int j = 0; j < urls.length; j++) {
-        webPage.getOutlinks().put(new Utf8(anchor + j), new Utf8(urls[j]));
+        webPage.getOutlinks().put(anchor + j, urls[j]);
       }
-      dataStore.put(webPage.getUrl().toString(), webPage);
+      dataStore.put(webPage.getUrl(), webPage);
     }
 
     dataStore.flush();
@@ -630,9 +627,9 @@ public class DataStoreTestUtil {
     for (int i = 0; i < urls.length; i++) {
       WebPage webPage = dataStore.get(urls[i]);
       for (int j = 1; j < urls.length; j += 2) {
-        webPage.getOutlinks().remove(new Utf8(anchor + j));
+        webPage.getOutlinks().remove(anchor + j);
       }
-      dataStore.put(webPage.getUrl().toString(), webPage);
+      dataStore.put(webPage.getUrl(), webPage);
     }
 
     dataStore.flush();
@@ -641,7 +638,7 @@ public class DataStoreTestUtil {
       int count = 0;
       WebPage webPage = dataStore.get(urls[i]);
       for (int j = 1; j < urls.length; j += 2) {
-        CharSequence link = webPage.getOutlinks().get(new Utf8(anchor + j));
+        String link = webPage.getOutlinks().get(anchor + j);
         assertNull(link);
         //assertEquals(urls[j], link.toString());
         count++;
@@ -662,12 +659,12 @@ public class DataStoreTestUtil {
 
     for (int i = 0; i < urls.length; i++) {
       WebPage webPage = WebPage.newBuilder().build();
-      webPage.setUrl(new Utf8(urls[i]));
-      webPage.setHeaders(new HashMap<CharSequence, CharSequence>());
+      webPage.setUrl(urls[i]);
+      webPage.setHeaders(new HashMap<String, String>());
       for (int j = 0; j < headers.length; j++) {
-        webPage.getHeaders().put(new Utf8(header + j), new Utf8(headers[j]));
+        webPage.getHeaders().put(header + j, headers[j]);
       }
-      dataStore.put(webPage.getUrl().toString(), webPage);
+      dataStore.put(webPage.getUrl(), webPage);
     }
 
     dataStore.flush();
@@ -676,7 +673,7 @@ public class DataStoreTestUtil {
     for (int i = 0; i < urls.length; i++) {
       WebPage webPage = dataStore.get(urls[i]);
       webPage.setHeaders(null);
-      dataStore.put(webPage.getUrl().toString(), webPage);
+      dataStore.put(webPage.getUrl(), webPage);
     }
 
     dataStore.flush();
@@ -690,7 +687,7 @@ public class DataStoreTestUtil {
   public static void assertWebPage(WebPage page, int i) throws Exception{
     assertNotNull(page);
 
-    assertEquals(URLS[i], page.getUrl().toString());
+    assertEquals(URLS[i], page.getUrl());
     // 'content' is optional
     if (page.getContent() != null) {
       assertTrue("content error:" + new String( toByteArray(page.getContent()) ) +
@@ -698,19 +695,19 @@ public class DataStoreTestUtil {
         , Arrays.equals( toByteArray(page.getContent() )
         , CONTENTS[i].getBytes()));
     
-      List<CharSequence> parsedContent = page.getParsedContent();
+      List<String> parsedContent = page.getParsedContent();
       assertNotNull(parsedContent);
       assertTrue(parsedContent.size() > 0);
     
       int j=0;
       String[] tokens = CONTENTS[i].split(" ");
-      for(CharSequence token : parsedContent) {
-        assertEquals(tokens[j++], token.toString());
+      for(String token : parsedContent) {
+        assertEquals(tokens[j++], token);
       }
     } else {
       // when page.getContent() is null
       assertTrue(CONTENTS[i] == null) ;
-      List<CharSequence> parsedContent = page.getParsedContent();
+      List<String> parsedContent = page.getParsedContent();
       assertNotNull(parsedContent);
       assertTrue(parsedContent.size() == 0);
     }
@@ -720,7 +717,7 @@ public class DataStoreTestUtil {
       assertTrue(page.getOutlinks().size() > 0);
       for(int k=0; k<LINKS[i].length; k++) {
         assertEquals(ANCHORS[i][k],
-          page.getOutlinks().get(new Utf8(URLS[LINKS[i][k]])).toString());
+          page.getOutlinks().get(URLS[LINKS[i][k]]));
       }
     } else {
       assertTrue(page.getOutlinks() == null || page.getOutlinks().isEmpty());
@@ -798,7 +795,7 @@ public class DataStoreTestUtil {
         int r=0;
         while(result.next()) {
           WebPage page = result.get();
-          assertWebPage(page, URL_INDEXES.get(page.getUrl().toString()));
+          assertWebPage(page, URL_INDEXES.get(page.getUrl()));
           r++;
         }
 
@@ -1033,12 +1030,12 @@ public class DataStoreTestUtil {
       assertNotNull(page);
 
       assertNotNull(page.getUrl());
-      assertEquals(page.getUrl().toString(), SORTED_URLS[i]);
+      assertEquals(page.getUrl(), SORTED_URLS[i]);
       assertEquals("Map of Outlinks should have a size of '0' as the deleteByQuery "
           + "not only removes the data but also the data structure.", 0, page.getOutlinks().size());
       assertEquals(0, page.getParsedContent().size());
       if(page.getContent() != null) {
-        System.out.println("url:" + page.getUrl().toString());
+        System.out.println("url:" + page.getUrl());
         System.out.println( "limit:" + page.getContent().limit());
       } else {
         assertNull(page.getContent());
@@ -1094,10 +1091,10 @@ public class DataStoreTestUtil {
     WebPage page = WebPage.newBuilder().build();
     Metadata metadata = Metadata.newBuilder().build();
     metadata.setVersion(1);
-    metadata.getData().put(new Utf8("foo"), new Utf8("baz"));
+    metadata.getData().put("foo", "baz");
 
     page.setMetadata(metadata);
-    page.setUrl(new Utf8(url));
+    page.setUrl(url);
 
     store.put(revUrl, page);
     store.flush();
@@ -1106,7 +1103,7 @@ public class DataStoreTestUtil {
     metadata = page.getMetadata();
     assertNotNull(metadata);
     assertEquals(1, metadata.getVersion().intValue()); 
-    assertEquals(new Utf8("baz"), metadata.getData().get(new Utf8("foo")));
+    assertEquals("baz", metadata.getData().get("foo"));
   }
 
   public static void testPutArray(DataStore<String, WebPage> store)
@@ -1115,9 +1112,9 @@ public class DataStoreTestUtil {
     WebPage page = WebPage.newBuilder().build();
 
     String[] tokens = {"example", "content", "in", "example.com"};
-    page.setParsedContent(new ArrayList<CharSequence>());
+    page.setParsedContent(new ArrayList<String>());
     for(String token: tokens) {
-      page.getParsedContent().add(new Utf8(token));
+      page.getParsedContent().add(token);
     }
 
     store.put("com.example/http", page);
@@ -1130,7 +1127,7 @@ public class DataStoreTestUtil {
 
     store.createSchema();
     WebPage page = WebPage.newBuilder().build();
-    page.setUrl(new Utf8("http://example.com"));
+    page.setUrl("http://example.com");
     byte[] contentBytes = "example content in example.com".getBytes();
     ByteBuffer buff = ByteBuffer.wrap(contentBytes);
     page.setContent(buff);
@@ -1148,10 +1145,10 @@ public class DataStoreTestUtil {
 
     WebPage page = WebPage.newBuilder().build();
 
-    page.setUrl(new Utf8("http://example.com"));
-    page.getOutlinks().put(new Utf8("http://example2.com"), new Utf8("anchor2"));
-    page.getOutlinks().put(new Utf8("http://example3.com"), new Utf8("anchor3"));
-    page.getOutlinks().put(new Utf8("http://example3.com"), new Utf8("anchor4"));
+    page.setUrl("http://example.com");
+    page.getOutlinks().put("http://example2.com", "anchor2");
+    page.getOutlinks().put("http://example3.com", "anchor3");
+    page.getOutlinks().put("http://example3.com", "anchor4");
     store.put("com.example/http", page);
 
   }
@@ -1161,17 +1158,17 @@ public class DataStoreTestUtil {
 
     store.createSchema();
     WebPage page = WebPage.newBuilder().build();
-    page.setUrl(new Utf8("http://www.example.com"));
-    page.getOutlinks().put(new Utf8("http://www.example2.com"), new Utf8("anchor2"));
-    page.getOutlinks().put(new Utf8("http://www.example3.com"), new Utf8("anchor3"));
-    page.getOutlinks().put(new Utf8("http://www.example4.com"), new Utf8("anchor4"));
+    page.setUrl("http://www.example.com");
+    page.getOutlinks().put("http://www.example2.com", "anchor2");
+    page.getOutlinks().put("http://www.example3.com", "anchor3");
+    page.getOutlinks().put("http://www.example4.com", "anchor4");
 
     MapFieldValueFilter filter = new MapFieldValueFilter();
     filter.setFieldName("outlinks");
-    filter.setMapKey(new Utf8("http://www.example2.com"));
+    filter.setMapKey("http://www.example2.com");
     filter.setFilterOp(FilterOp.EQUALS);
-    List<Utf8> operands = new ArrayList<>();
-    operands.add(new Utf8("anchor2"));
+    List<String> operands = new ArrayList<>();
+    operands.add("anchor2");
     filter.setOperands(operands);
     assertFalse(filter.filter("url", page)); // the page is not filtered out.
 

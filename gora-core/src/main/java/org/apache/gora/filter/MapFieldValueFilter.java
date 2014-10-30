@@ -145,7 +145,7 @@ public class MapFieldValueFilter<K, T extends PersistentBase> implements Filter<
     return filterOp;
   }
 
-  public void setFilterOp(FilterOp fisslterOp) {
+  public void setFilterOp(FilterOp filterOp) {
     this.filterOp = filterOp;
   }
 

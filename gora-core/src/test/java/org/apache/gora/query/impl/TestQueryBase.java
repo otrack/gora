@@ -47,6 +47,8 @@ public class TestQueryBase {
   public void testReadWrite() throws Exception {
     query.setFields(FIELDS);
     query.setKeyRange(START_KEY, END_KEY);
+    query.setLimit(1);
+    query.setOffset(1);
     TestIOUtils.testSerializeDeserialize(query);
     
     assertNotNull(query.getDataStore());

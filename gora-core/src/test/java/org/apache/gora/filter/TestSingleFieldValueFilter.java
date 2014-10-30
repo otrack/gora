@@ -23,7 +23,6 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.hadoop.io.WritableUtils;
 import org.junit.Test;
@@ -37,7 +36,7 @@ public class TestSingleFieldValueFilter {
     filter.setFieldName(WebPage.Field.URL.toString());
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
-    filter.getOperands().add(new Utf8("http://example.org"));
+    filter.getOperands().add("http://example.org");
     byte[] byteArray = WritableUtils.toByteArray(filter);
     SingleFieldValueFilter<String, WebPage> filter2 = new SingleFieldValueFilter<String, WebPage>();
     filter2.readFields(new DataInputStream(new ByteArrayInputStream(byteArray)));
@@ -54,12 +53,12 @@ public class TestSingleFieldValueFilter {
     filter.setFieldName(WebPage.Field.URL.toString());
     filter.setFilterOp(FilterOp.EQUALS);
     filter.setFilterIfMissing(true);
-    filter.getOperands().add(new Utf8("example.org"));
+    filter.getOperands().add("example.org");
     
     WebPage page = WebPage.newBuilder().build();
-    page.setUrl(new Utf8("example.org"));
+    page.setUrl("example.org");
     assertFalse(filter.filter("irrelevant", page));
-    page.setUrl(new Utf8("mismatch.whatever"));
+    page.setUrl("mismatch.whatever");
     assertTrue(filter.filter("irrelevant", page));
     page = new WebPage();
     assertTrue(filter.filter("irrelevant", page));
@@ -76,13 +75,13 @@ public class TestSingleFieldValueFilter {
     filter.setFieldName(WebPage.Field.URL.toString());
     filter.setFilterOp(FilterOp.NOT_EQUALS);
     filter.setFilterIfMissing(true);
-    filter.getOperands().add(new Utf8("example.org"));
+    filter.getOperands().add("example.org");
     
     WebPage page = WebPage.newBuilder().build();
-    page.setUrl(new Utf8("example.org"));
+    page.setUrl("example.org");
     assertTrue(filter.filter("irrelevant", page));
     
-    page.setUrl(new Utf8("something.else"));
+    page.setUrl("something.else");
     assertFalse(filter.filter("irrelevant", page));
   }
   

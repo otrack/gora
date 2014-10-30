@@ -13,7 +13,7 @@ public class TestAvroUtils {
 
     @Test
     public void testDeepClonePersistent() throws Exception {
-        CharSequence url = new Utf8("http://gora.apache.org/");
+        String url = "http://gora.apache.org/";
         WebPage.Builder builder = WebPage.newBuilder()
             .setUrl(url)
             .setContent(ByteBuffer.wrap("Gora".getBytes("UTF-8")));

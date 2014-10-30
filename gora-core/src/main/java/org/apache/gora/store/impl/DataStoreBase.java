@@ -158,6 +158,12 @@ public abstract class DataStoreBase<K, T extends PersistentBase>
     return get(key, getFieldsToQuery(null));
   };
 
+  @Override
+  public void putIfAbsent(K key, T obj){
+    if (get(key)==null)
+      put(key, obj);
+  }
+
   /**
    * Checks whether the fields argument is null, and if so
    * returns all the fields of the Persistent object, else returns the

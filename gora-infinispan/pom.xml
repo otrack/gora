@@ -159,6 +159,12 @@
             <artifactId>infinispan-remote-query-client</artifactId>
             <version>${infinispan.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-ensemble</artifactId>
+            <version>${infinispan.version}</version>
+        </dependency>
+
 
         <!-- Logging Dependencies -->
         <dependency>
@@ -258,6 +264,13 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-hotrod</artifactId>
             <version>${infinispan.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-ensemble</artifactId>
+            <version>${infinispan.version}</version>
+            <type>test-jar</type>
             <scope>test</scope>
         </dependency>
     </dependencies>
