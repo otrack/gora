@@ -29,7 +29,6 @@ import org.infinispan.ensemble.cache.EnsembleCache;
 import org.infinispan.ensemble.cache.distributed.ClusteringBasedPartitioner;
 import org.infinispan.ensemble.cache.distributed.Coordinates;
 import org.infinispan.ensemble.cache.distributed.Partitioner;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.avro.AvroMarshaller;
@@ -80,7 +79,7 @@ public class InfinispanClient<K, T extends PersistentBase> implements
     cacheManager = new EnsembleCacheManager(host,marshaller);
 
     cache = cacheManager.getCache(
-      CacheContainer.DEFAULT_CACHE_NAME,
+      persistentClass.getSimpleName(),
       new ArrayList<>(cacheManager.sites()),
       true,
       createPartitioner(properties));
