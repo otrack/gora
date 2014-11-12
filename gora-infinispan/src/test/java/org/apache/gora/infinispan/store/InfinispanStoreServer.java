@@ -2,6 +2,7 @@ package org.apache.gora.infinispan.store;
 
 import org.apache.gora.infinispan.GoraInfinispanTestDriver;
 import org.apache.hadoop.conf.Configuration;
+import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -18,7 +19,7 @@ public class InfinispanStoreServer {
 
   static{
     try {
-      testDriver = new GoraInfinispanTestDriver(3);
+      testDriver = new GoraInfinispanTestDriver(1,1);
       testDriver.setUpClass();
       conf = testDriver.getConfiguration();
     } catch (Exception e) {
@@ -29,6 +30,7 @@ public class InfinispanStoreServer {
   public InfinispanStoreServer(){}
 
   @Test
+  @Ignore
   public void runServer(){
     System.out.println("STARTING SERVER");
     synchronized(this){

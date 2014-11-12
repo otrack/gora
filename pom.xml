@@ -623,8 +623,8 @@
         <cassandra.version>2.0.2</cassandra.version>
         <hector.version>1.1-4</hector.version>
         <!-- Solr Dependencies -->
-        <lucene-solr.version>4.8.1</lucene-solr.version>
-        <solr-solrj.version>4.8.1</solr-solrj.version>
+        <lucene-solr.version>4.10.2</lucene-solr.version>
+        <solr-solrj.version>4.10.2</solr-solrj.version>
         <jetty.version>8.1.8.v20121106</jetty.version>
         <tika.version>1.5</tika.version>
         <httpcomponents.version>4.2.3</httpcomponents.version>

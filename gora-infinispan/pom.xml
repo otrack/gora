@@ -50,7 +50,7 @@
 
     <properties>
         <osgi.import>*</osgi.import>
-        <infinispan.version>7.0.0-SNAPSHOT</infinispan.version>
+        <infinispan.version>7.0.1-SNAPSHOT</infinispan.version>
     </properties>
 
     <build>

@@ -26,11 +26,13 @@ package org.apache.gora.infinispan.store;
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.infinispan.GoraInfinispanTestDriver;
+import org.apache.gora.infinispan.query.InfinispanPartitionQuery;
 import org.apache.gora.infinispan.query.InfinispanQuery;
 import org.apache.gora.mapreduce.MapReduceTestUtils;
+import org.apache.gora.query.PartitionQuery;
 import org.apache.gora.store.DataStore;
-import org.apache.gora.store.DataStoreFactory;
 import org.apache.gora.store.DataStoreTestBase;
+import org.apache.gora.store.DataStoreTestUtil;
 import org.apache.gora.util.TestIOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
@@ -42,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.gora.store.DataStoreFactory.GORA_CONNECTION_STRING_KEY;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
@@ -50,12 +53,14 @@ import static org.junit.Assert.assertNotNull;
 public class InfinispanStoreTest extends DataStoreTestBase {
 
   private Configuration conf;
+  private InfinispanStore<String,Employee> employeeDataStore;
+  private InfinispanStore<String,WebPage> webPageDataStore;
 
   static {
     List<String> cacheNames = new ArrayList<>();
     cacheNames.add(Employee.class.getSimpleName());
     cacheNames.add(WebPage.class.getSimpleName());
-    setTestDriver(new GoraInfinispanTestDriver(3,cacheNames));
+    setTestDriver(new GoraInfinispanTestDriver(3, 3, cacheNames));
   }
 
   @Before
@@ -63,40 +68,56 @@ public class InfinispanStoreTest extends DataStoreTestBase {
     super.setUp();
     conf = getTestDriver().getConfiguration();
     conf.set(GORA_CONNECTION_STRING_KEY,getTestDriver().connectionString());
+    employeeDataStore = (InfinispanStore<String, Employee>) employeeStore;
+    webPageDataStore = (InfinispanStore<String, WebPage>) webPageStore;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   protected DataStore<String, Employee> createEmployeeDataStore()
     throws IOException {
-    InfinispanStore<String, Employee> employeeDataStore =
-      DataStoreFactory.getDataStore(InfinispanStore.class, String.class,Employee.class, conf);
-    assertNotNull(employeeDataStore);
-    employeeDataStore.initialize(String.class, Employee.class, null);
-    return employeeDataStore;
+    throw new IllegalStateException("Using driver.");
   }
 
   @SuppressWarnings("unchecked")
   @Override
   protected DataStore<String, WebPage> createWebPageDataStore()
     throws IOException {
-    InfinispanStore<String, WebPage> webPageDataStore =
-      DataStoreFactory.getDataStore(InfinispanStore.class, String.class,WebPage.class, conf);
-    webPageDataStore.initialize(String.class, WebPage.class, null);
-    return webPageDataStore;
+    throw new IllegalStateException("Using driver.");
   }
 
   @Test
   public void testReadWriteQuery() throws Exception {
-    InfinispanQuery query = new InfinispanQuery((InfinispanStore) this.employeeStore);
+
+    DataStoreTestUtil.populateEmployeeStore(employeeStore, 100);
+
+    // Marshability
+    InfinispanQuery<String,Employee> query = new InfinispanQuery<>(employeeDataStore);
     query.setFields("field");
-    query.setKeyRange(1, 1);
+    query.setKeyRange("1", "1");
     query.setLimit(1);
     query.setOffset(1);
     query.build();
     TestIOUtils.testSerializeDeserialize(query);
-
     assertNotNull(query.getDataStore());
+
+    // Correct sizes
+    for (int i=1; i<=100; i++) {
+      query = new InfinispanQuery<>(employeeDataStore);
+      query.setLimit(i);
+      query.build();
+      assertEquals(i, query.list().size());
+    }
+
+    // Partitioning
+    employeeDataStore.setPartitionSize(10);
+    query = new InfinispanQuery<>(employeeDataStore);
+    for (PartitionQuery<String,Employee> q : employeeDataStore.getPartitions(query)) {
+      InfinispanPartitionQuery<String,Employee> p = (InfinispanPartitionQuery) q;
+      p.build();
+      assertEquals(10, p.list().size());
+    }
+
   }
 
 

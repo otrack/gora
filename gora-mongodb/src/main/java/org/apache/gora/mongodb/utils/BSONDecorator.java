@@ -17,15 +17,13 @@
  */
 package org.apache.gora.mongodb.utils;
 
-import java.nio.ByteBuffer;
-import java.util.Date;
-
-import org.apache.avro.util.Utf8;
-import org.bson.BSONObject;
-
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import org.bson.BSONObject;
+
+import java.nio.ByteBuffer;
+import java.util.Date;
 
 /**
  * Utility class to build {@link DBObject} used by MongoDB in an easy way by
@@ -159,22 +157,6 @@ public class BSONDecorator {
   public Date getDate(String fieldName) {
     BasicDBObject parent = getFieldParent(fieldName);
     return parent.getDate(getLeafName(fieldName));
-  }
-
-  /**
-   * Access field as a Utf8 string.
-   * 
-   * @param fieldName
-   *          fully qualified name of the field to be accessed
-   * @return value of the field as a {@link Utf8} string
-   */
-  public Utf8 getUtf8String(String fieldName) {
-    BasicDBObject parent = getFieldParent(fieldName);
-    String value = parent.getString(getLeafName(fieldName));
-    if (value != null)
-      return new Utf8(value);
-    else
-      return new Utf8();
   }
 
   /**

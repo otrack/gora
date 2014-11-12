@@ -17,17 +17,8 @@
  */
 package org.apache.gora.mongodb.store;
 
-import static org.apache.gora.mongodb.store.MongoMapping.DocumentFieldType;
-
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.xml.bind.DatatypeConverter;
-
+import com.google.common.base.Splitter;
+import com.mongodb.*;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
@@ -54,8 +45,15 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Splitter;
-import com.mongodb.*;
+import javax.xml.bind.DatatypeConverter;
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.apache.gora.mongodb.store.MongoMapping.DocumentFieldType;
 
 /**
  * Implementation of a MongoDB data store to be used by gora.
@@ -591,8 +589,7 @@ public class MongoStore<K, T extends PersistentBase> extends
       result = fromMongoString(storeType, docf, easybson);
       break;
     case ENUM:
-      result = AvroUtils.getEnumValue(fieldSchema, easybson.getUtf8String(docf)
-          .toString());
+      result = AvroUtils.getEnumValue(fieldSchema, docf);
       break;
     case BYTES:
     case FIXED:
@@ -722,7 +719,7 @@ public class MongoStore<K, T extends PersistentBase> extends
         result = new Utf8(bin.toString());
       }
     } else {
-      result = easybson.getUtf8String(docf);
+      result = docf;
     }
     return result;
   }

@@ -147,7 +147,7 @@ public class TestPersistentBase {
     MemStore<String, Employee> store = DataStoreFactory.getDataStore(
         MemStore.class, String.class, Employee.class, new Configuration());
 
-    Employee employee = DataStoreTestUtil.createEmployee(store);
+    Employee employee = DataStoreTestUtil.createRandomJoe();
     
     assertEquals(employee, Employee.newBuilder(employee).build());
   }

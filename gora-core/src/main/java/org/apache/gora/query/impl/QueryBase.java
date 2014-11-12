@@ -60,8 +60,8 @@ public abstract class QueryBase<K, T extends PersistentBase>
   protected Filter<K, T> filter;
   protected boolean localFilterEnabled=true;
 
-  protected long limit = -1;
-  protected int offset = -1;
+  protected long limit = 0; // 0 means no limit
+  protected int offset = 0; // 0 is the right initial value.
 
   private Configuration conf;
 

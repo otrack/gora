@@ -39,7 +39,7 @@ public class GoraRecordReader<K, T extends PersistentBase> extends RecordReader<
   public static final Logger LOG = LoggerFactory.getLogger(GoraRecordReader.class);
 
   public static final String BUFFER_LIMIT_READ_NAME = "gora.buffer.read.limit";
-  public static final int BUFFER_LIMIT_READ_VALUE = 10000;
+  public static final int BUFFER_LIMIT_READ_VALUE = Integer.MAX_VALUE;
 
   protected Query<K,T> query;
   protected Result<K,T> result;
@@ -51,17 +51,14 @@ public class GoraRecordReader<K, T extends PersistentBase> extends RecordReader<
 
     Configuration configuration = context.getConfiguration();
     int recordsMax = configuration.getInt(BUFFER_LIMIT_READ_NAME, BUFFER_LIMIT_READ_VALUE);
-    
-    // Check if result set will at least contain 2 rows
-    if (recordsMax <= 1) {
-      LOG.info("Limit " + recordsMax + " changed to " + BUFFER_LIMIT_READ_VALUE);
+
+    if (recordsMax <= 0) {
+      LOG.info("Invalid read limit" + recordsMax + ", changed to " + BUFFER_LIMIT_READ_VALUE);
       recordsMax = BUFFER_LIMIT_READ_VALUE;
     }
     
     counter.setRecordsMax(recordsMax);
-    LOG.info("gora.buffer.read.limit = " + recordsMax);
-    
-    this.query.setLimit(recordsMax);
+
   }
 
   public void executeQuery() throws IOException, Exception {

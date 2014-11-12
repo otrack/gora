@@ -54,16 +54,18 @@ public class GoraInfinispanTestDriver extends GoraTestDriver {
 
   private EnsembleDelegate delegate;
   private int numberOfSites;
+  private int numbderOfNodes;
   public List<String> cacheNames;
 
-  public GoraInfinispanTestDriver(int numberOfSites) {
-    this(numberOfSites,null);
+  public GoraInfinispanTestDriver(int numberOfSites, int numbderOfNodes) {
+    this(numberOfSites,numbderOfNodes, null);
   }
 
-  public GoraInfinispanTestDriver(int numberOfSites, List<String> cacheNames){
+  public GoraInfinispanTestDriver(int numberOfSites, int numbderOfNodes, List<String> cacheNames){
     super(InfinispanStore.class);
     this.cacheNames = new ArrayList<>();
     this.numberOfSites = numberOfSites;
+    this.numbderOfNodes = numbderOfNodes;
     if (cacheNames!=null) {
       this.cacheNames.addAll(cacheNames);
     }
@@ -114,6 +116,11 @@ public class GoraInfinispanTestDriver extends GoraTestDriver {
     @Override
     protected int numberOfSites() {
       return numberOfSites;
+    }
+
+    @Override
+    protected int numberOfNodes() {
+      return numbderOfNodes;
     }
 
     @Override

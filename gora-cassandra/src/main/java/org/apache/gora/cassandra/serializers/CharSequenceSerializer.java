@@ -18,15 +18,13 @@
 
 package org.apache.gora.cassandra.serializers;
 
-import static me.prettyprint.hector.api.ddl.ComparatorType.UTF8TYPE;
-
-import java.nio.ByteBuffer;
-
-import org.apache.avro.util.Utf8;
-
 import me.prettyprint.cassandra.serializers.AbstractSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.ddl.ComparatorType;
+
+import java.nio.ByteBuffer;
+
+import static me.prettyprint.hector.api.ddl.ComparatorType.UTF8TYPE;
 
 /**
  * A CharSequenceSerializer translates the byte[] to and from CharSequenceSerializer object of Avro.
@@ -48,12 +46,11 @@ public final class CharSequenceSerializer extends AbstractSerializer<CharSequenc
   }
 
   @Override
-  //TODO: CharSequence cause Test Fail. All tests set UTF8. When change test set type. This will be CharSequence 
-  public Utf8 fromByteBuffer(ByteBuffer byteBuffer) {
+  public String fromByteBuffer(ByteBuffer byteBuffer) {
     if (byteBuffer == null) {
       return null;
     }
-    return new Utf8(StringSerializer.get().fromByteBuffer(byteBuffer));
+    return StringSerializer.get().fromByteBuffer(byteBuffer);
   }
 
   @Override

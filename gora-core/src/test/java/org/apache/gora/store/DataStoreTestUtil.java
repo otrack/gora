@@ -70,9 +70,7 @@ public class DataStoreTestUtil {
     assertFalse( obj1 == obj2 );
   }
 
-  public static <K> Employee createEmployee(
-      DataStore<K, Employee> dataStore) throws IOException, Exception {
-
+  public static Employee createRandomJoe() {
     Employee employee = Employee.newBuilder().build();
     employee.setName("Random Joe");
     employee.setDateOfBirth( System.currentTimeMillis() - 20L *  YEAR_IN_MS );
@@ -81,7 +79,33 @@ public class DataStoreTestUtil {
     return employee;
   }
 
-  private static <K> WebPage createWebPage(DataStore<K, Employee> dataStore) {
+  public static Employee createBoss(){
+    Employee employee = Employee.newBuilder().build();
+    employee.setName("Random boss");
+    employee.setDateOfBirth(System.currentTimeMillis() - 22L * YEAR_IN_MS);
+    employee.setSalary(1000000);
+    employee.setSsn("202020202020");
+    return employee;
+  }
+
+  public static Employee createEmployee() {
+    Employee employee = Employee.newBuilder().build();
+    employee.setName(Long.toString(System.currentTimeMillis()));
+    employee.setDateOfBirth(System.currentTimeMillis() - 20L * YEAR_IN_MS);
+    employee.setSalary((int) System.currentTimeMillis());
+    employee.setSsn(Long.toString(System.currentTimeMillis()));
+    return employee;
+  }
+
+  public static void populateEmployeeStore(
+    DataStore<String, Employee> dataStore, int n){
+    for(int i=0; i<n; i++) {
+      Employee e = createEmployee();
+      dataStore.put(e.getSsn(),e);
+    }
+  }
+
+  private static WebPage createWebPage() {
     WebPage webpage = WebPage.newBuilder().build();
     webpage.setUrl("url..");
     webpage.setContent(ByteBuffer.wrap("test content".getBytes()));
@@ -91,21 +115,11 @@ public class DataStoreTestUtil {
     return webpage;
   }
 
-  public static <K> Employee createBoss(DataStore<K, Employee> dataStore)
-      throws IOException, Exception {
 
-    Employee employee = Employee.newBuilder().build();
-    employee.setName("Random boss");
-    employee.setDateOfBirth(System.currentTimeMillis() - 22L * YEAR_IN_MS);
-    employee.setSalary(1000000);
-    employee.setSsn("202020202020");
-    return employee;
-  }
-  
   public static void testAutoCreateSchema(DataStore<String,Employee> dataStore)
   throws IOException, Exception {
     //should not throw exception
-    dataStore.put("foo", createEmployee(dataStore));
+    dataStore.put("foo", createRandomJoe());
   }
 
   public static void testCreateEmployeeSchema(DataStore<String, Employee> dataStore)
@@ -148,7 +162,7 @@ public class DataStoreTestUtil {
   public static void testGetEmployee(DataStore<String, Employee> dataStore)
     throws IOException, Exception {
     dataStore.createSchema();
-    Employee employee = DataStoreTestUtil.createEmployee(dataStore);
+    Employee employee = DataStoreTestUtil.createRandomJoe();
     String ssn = employee.getSsn();
     dataStore.put(ssn, employee);
     dataStore.flush();
@@ -161,8 +175,8 @@ public class DataStoreTestUtil {
   public static void testGetEmployeeRecursive(DataStore<String, Employee> dataStore)
     throws IOException, Exception {
 
-    Employee employee = DataStoreTestUtil.createEmployee(dataStore);
-    Employee boss = DataStoreTestUtil.createBoss(dataStore);
+    Employee employee = DataStoreTestUtil.createRandomJoe();
+    Employee boss = DataStoreTestUtil.createBoss();
     employee.setBoss(boss);
     
     String ssn = employee.getSsn();
@@ -175,9 +189,9 @@ public class DataStoreTestUtil {
   public static void testGetEmployeeDoubleRecursive(DataStore<String, Employee> dataStore)
       throws IOException, Exception {
 
-      Employee employee = DataStoreTestUtil.createEmployee(dataStore);
-      Employee boss = DataStoreTestUtil.createBoss(dataStore);
-      Employee uberBoss = DataStoreTestUtil.createBoss(dataStore);
+      Employee employee = DataStoreTestUtil.createRandomJoe();
+      Employee boss = DataStoreTestUtil.createBoss();
+      Employee uberBoss = DataStoreTestUtil.createBoss();
       uberBoss.setName("Überboss") ;
       boss.setBoss(uberBoss) ;
       employee.setBoss(boss) ;
@@ -192,7 +206,7 @@ public class DataStoreTestUtil {
   public static void testGetEmployeeNested(DataStore<String, Employee> dataStore)
     throws IOException, Exception {
 
-    Employee employee = DataStoreTestUtil.createEmployee(dataStore);
+    Employee employee = DataStoreTestUtil.createRandomJoe();
     WebPage webpage = new BeanFactoryImpl<String,WebPage>(String.class,WebPage.class).newPersistent() ;
     
     webpage.setUrl("url..") ;
@@ -214,7 +228,7 @@ public class DataStoreTestUtil {
   public static void testGetEmployee3UnionField(DataStore<String, Employee> dataStore)
     throws IOException, Exception {
 
-    Employee employee = DataStoreTestUtil.createEmployee(dataStore);
+    Employee employee = DataStoreTestUtil.createRandomJoe();
     employee.setBoss("Real boss") ;
 
     String ssn = employee.getSsn();
@@ -233,10 +247,10 @@ public class DataStoreTestUtil {
 
   public static void testGetEmployeeWithFields(DataStore<String, Employee> dataStore)
     throws IOException, Exception {
-    Employee employee = DataStoreTestUtil.createEmployee(dataStore);
-    WebPage webpage = createWebPage(dataStore);
+    Employee employee = DataStoreTestUtil.createRandomJoe();
+    WebPage webpage = createWebPage();
     employee.setWebpage(webpage);
-    Employee boss = createBoss(dataStore);
+    Employee boss = createBoss();
     employee.setBoss(boss);
     String ssn = employee.getSsn();
     dataStore.put(ssn, employee);
@@ -366,7 +380,7 @@ public class DataStoreTestUtil {
   public static Employee testPutEmployee(DataStore<String, Employee> dataStore)
   throws IOException, Exception {
     dataStore.createSchema();
-    Employee employee = DataStoreTestUtil.createEmployee(dataStore);
+    Employee employee = DataStoreTestUtil.createRandomJoe();
     return employee;
   }
 
