@@ -20,123 +20,131 @@ import java.util.List;
  */
 public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T> {
 
-   public static final Logger LOG = LoggerFactory.getLogger(InfinispanQuery.class);
+  public static final Logger LOG = LoggerFactory.getLogger(InfinispanQuery.class);
 
-   private QueryBuilder qb;
-   private org.infinispan.query.dsl.Query q;
+  private QueryBuilder qb;
+  private org.infinispan.query.dsl.Query q;
 
-   public InfinispanQuery(){
-      super(null);
-   }
+  public InfinispanQuery(){
+    super(null);
+  }
 
-   public InfinispanQuery(InfinispanStore<K, T> dataStore) {
-      super(dataStore);
-   }
+  public InfinispanQuery(InfinispanStore<K, T> dataStore) {
+    super(dataStore);
+  }
 
-   public void build(){
+  public void build(){
 
-      FilterConditionContext context = null;
+    FilterConditionContext context = null;
 
-      if(qb==null)
-         qb = ((InfinispanStore<K,T>)dataStore).getClient().getQueryBuilder();
+    if(qb==null)
+      qb = ((InfinispanStore<K,T>)dataStore).getClient().getQueryBuilder();
 
-      if(q!=null) {
-         LOG.info("Query already built; ignoring.");
-         return;
+    if(q!=null) {
+      LOG.info("Query already built; ignoring.");
+      return;
+    }
+
+    if (filter instanceof  MapFieldValueFilter){
+      MapFieldValueFilter mfilter = (MapFieldValueFilter) filter;
+      if (mfilter.getOperands().size()>1)
+        throw new IllegalAccessError("MapFieldValueFilter operand not supported.");
+      String value = mfilter.getMapKey()+"::"+mfilter.getOperands().get(0).toString();
+      switch (mfilter.getFilterOp()) {
+        case EQUALS:
+          context = qb.having(mfilter.getFieldName()).eq(value);
+          if (!((MapFieldValueFilter) filter).isFilterIfMissing()) {
+            LOG.warn("Forcing isFilterMissing to true");
+            ((MapFieldValueFilter) filter).setFilterIfMissing(true);
+          }
+          break;
+        case NOT_EQUALS:
+          context = qb.not().having(mfilter.getFieldName()).eq(value);
+          if (!((MapFieldValueFilter) filter).isFilterIfMissing()) {
+            LOG.warn("Forcing isFilterMissing to false");
+            ((MapFieldValueFilter) filter).setFilterIfMissing(false);
+          }
+          break;
+        default:
+          throw new IllegalAccessError("FilterOp not supported..");
       }
 
-      if (filter instanceof  MapFieldValueFilter){
-         MapFieldValueFilter mfilter = (MapFieldValueFilter) filter;
-         if (mfilter.getOperands().size()>1)
-            throw new IllegalAccessError("MapFieldValueFilter operand not supported.");
-         String value = mfilter.getMapKey()+"::"+mfilter.getOperands().get(0).toString();
-         switch (mfilter.getFilterOp()) {
-         case EQUALS:
-            context = qb.having(mfilter.getFieldName()).eq(value);
-            break;
-         case NOT_EQUALS:
-            context = qb.not().having(mfilter.getFieldName()).eq(value);
-            break;
-         default:
-            throw new IllegalAccessError("FilterOp not supported..");
-         }
-
-      } else if (filter instanceof  SingleFieldValueFilter){
-         SingleFieldValueFilter sfilter = (SingleFieldValueFilter) filter;
-         if (sfilter.getOperands().size()>1)
-            throw new IllegalAccessError("SingleFieldValueFilter operand not supported.");
-         Object value = sfilter.getOperands().get(0);
-         switch (sfilter.getFilterOp()) {
-         case EQUALS:
-            context = qb.having(sfilter.getFieldName()).eq(value);
-            break;
-         case NOT_EQUALS:
-            context = qb.not().having(sfilter.getFieldName()).eq(value);
-            break;
-         case LESS:
-            context = qb.having(sfilter.getFieldName()).lt(value);
-            break;
-         case LESS_OR_EQUAL:
-            context = qb.having(sfilter.getFieldName()).lte(value);
-            break;
-         case GREATER:
-            context = qb.having(sfilter.getFieldName()).gt(value);
-            break;
-         case GREATER_OR_EQUAL:
-            context = qb.having(sfilter.getFieldName()).gte(value);
-            break;
-         default:
-            throw new IllegalAccessError("FilterOp not supported..");
-         }
-
-      } else if (filter!=null) {
-         throw new IllegalAccessError("Filter not supported.");
+    } else if (filter instanceof  SingleFieldValueFilter){
+      SingleFieldValueFilter sfilter = (SingleFieldValueFilter) filter;
+      if (sfilter.getOperands().size()>1)
+        throw new IllegalAccessError("SingleFieldValueFilter operand not supported.");
+      Object value = sfilter.getOperands().get(0);
+      switch (sfilter.getFilterOp()) {
+        case EQUALS:
+          context = qb.having(sfilter.getFieldName()).eq(value);
+          break;
+        case NOT_EQUALS:
+          context = qb.not().having(sfilter.getFieldName()).eq(value);
+          break;
+        case LESS:
+          context = qb.having(sfilter.getFieldName()).lt(value);
+          break;
+        case LESS_OR_EQUAL:
+          context = qb.having(sfilter.getFieldName()).lte(value);
+          break;
+        case GREATER:
+          context = qb.having(sfilter.getFieldName()).gt(value);
+          break;
+        case GREATER_OR_EQUAL:
+          context = qb.having(sfilter.getFieldName()).gte(value);
+          break;
+        default:
+          throw new IllegalAccessError("FilterOp not supported..");
       }
 
-      if (this.startKey==this.endKey && this.startKey != null ){
-         (context == null ? qb : context.and()).having(getPrimaryFieldName()).eq(this.startKey);
-      }else{
-         if (this.startKey!=null && this.endKey!=null)
-            context = (context == null ? qb : context.and()).having(getPrimaryFieldName()).between(this.startKey,this.endKey);
-         else if (this.startKey!=null)
-            context = (context == null ? qb : context.and()).having(getPrimaryFieldName()).between(this.startKey,null);
-         else if (this.endKey!=null)
-            (context == null ? qb : context.and()).having(getPrimaryFieldName()).between(null,this.endKey);
-      }
+    } else if (filter!=null) {
+      throw new IllegalAccessError("Filter not supported.");
+    }
 
-      if (this.getLimit()>0)
-         qb.maxResults((int) this.getLimit());
+    if (this.startKey==this.endKey && this.startKey != null ){
+      (context == null ? qb : context.and()).having(getPrimaryFieldName()).eq(this.startKey);
+    }else{
+      if (this.startKey!=null && this.endKey!=null)
+        context = (context == null ? qb : context.and()).having(getPrimaryFieldName()).between(this.startKey,this.endKey);
+      else if (this.startKey!=null)
+        context = (context == null ? qb : context.and()).having(getPrimaryFieldName()).between(this.startKey,null);
+      else if (this.endKey!=null)
+        (context == null ? qb : context.and()).having(getPrimaryFieldName()).between(null,this.endKey);
+    }
 
-      // if projection enabled, keep the primary field.
-      if (fields!=null && fields.length > 0) {
-         String[] fieldsWithPrimary = Arrays.copyOf(fields, fields.length + 1);
-         fieldsWithPrimary[fields.length] = getPrimaryFieldName();
-         qb.setProjection(fieldsWithPrimary);
-      }
+    if (this.getLimit()>0)
+      qb.maxResults((int) this.getLimit());
 
-      qb.orderBy(getPrimaryFieldName(), SortOrder.ASC);
+    // if projection enabled, keep the primary field.
+    if (fields!=null && fields.length > 0) {
+      String[] fieldsWithPrimary = Arrays.copyOf(fields, fields.length + 1);
+      fieldsWithPrimary[fields.length] = getPrimaryFieldName();
+      qb.setProjection(fieldsWithPrimary);
+    }
 
-      if (this.getOffset()>0)
-         qb.startOffset(this.getOffset());
+    qb.orderBy(getPrimaryFieldName(), SortOrder.ASC);
 
-      q = qb.build();
-   }
+    if (this.getOffset()>0)
+      qb.startOffset(this.getOffset());
 
-   public List<T> list(){
-      if(q==null)
-         throw new IllegalAccessError("Build before list.");
-      List<T> result = q.list();
-      for (Object t : q.list()) {
-         LOG.info(t.toString());
-      }
-      return result;
+    q = qb.build();
+  }
 
-   }
+  public List<T> list(){
+    if(q==null)
+      throw new IllegalAccessError("Build before list.");
+    List<T> result = q.list();
+    for (Object t : q.list()) {
+      LOG.info(t.toString());
+    }
+    return result;
 
-   public int getResultSize(){
-      return q.getResultSize();
-   }
+  }
 
-   public String getPrimaryFieldName(){ return ((InfinispanStore)dataStore).getPrimaryFieldName();}
+  public int getResultSize(){
+    return q.getResultSize();
+  }
+
+  public String getPrimaryFieldName(){ return ((InfinispanStore)dataStore).getPrimaryFieldName();}
 
 }

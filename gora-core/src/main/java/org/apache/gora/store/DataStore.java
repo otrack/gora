@@ -140,6 +140,13 @@ public interface DataStore<K, T extends Persistent> {
   T get(K key, String[] fields);
 
   /**
+   * Returns whether the key is present in the store or not.
+   * @param key
+   * @return
+   */
+  boolean containsKey(K key);
+
+  /**
    * Inserts the persistent object with the given key. If an 
    * object with the same key already exists it will silently
    * be replaced. See also the note on 

@@ -159,6 +159,11 @@ public abstract class DataStoreBase<K, T extends PersistentBase>
   };
 
   @Override
+  public boolean containsKey(K key){
+    return get(key)==null;
+  }
+
+  @Override
   public void putIfAbsent(K key, T obj){
     if (get(key)==null)
       put(key, obj);

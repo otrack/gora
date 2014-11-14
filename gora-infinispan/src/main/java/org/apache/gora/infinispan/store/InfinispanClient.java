@@ -119,6 +119,10 @@ public class InfinispanClient<K, T extends PersistentBase> implements
     return cache.get(key);
   }
 
+  public boolean containsKey(K key) {
+    return cache.containsKey(key);
+  }
+
   public String getCacheName() {
     return this.persistentClass.getSimpleName();
   }
