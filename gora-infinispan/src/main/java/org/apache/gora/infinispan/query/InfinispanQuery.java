@@ -16,7 +16,7 @@ import java.util.List;
 
 
 /*
- * * @author Pierre Sutra, valerio schiavoni
+ * * @author Pierre Sutra, Valerio Schiavoni
  */
 public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T> {
 
