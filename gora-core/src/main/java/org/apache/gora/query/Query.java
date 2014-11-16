@@ -95,6 +95,31 @@ public interface Query<K, T extends Persistent> {
    */
   boolean isLocalFilterEnabled();
 
+  /**
+   * Define the object field used to sort results.
+   * @param field
+   */
+  void setSortingField(String field);
+
+  /**
+   * Retrieve the field used to sort results..
+   * @return field in use to sort results.
+   */
+  String getSortingField();
+
+  /**
+   * Set whether the sort is ascendant or not.
+   * Sorting is ascendant by default.
+   * @param isAscendant
+   */
+  void setSortingOrder(boolean isAscendant);
+
+  /**
+   *
+   * @return <i>true</i> if the sorting is ascendant.
+   */
+  boolean isSortingAscendant();
+
   /* Dimension : key */ 
   void setKey(K key);
 

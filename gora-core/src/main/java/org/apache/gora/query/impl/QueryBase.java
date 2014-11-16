@@ -63,6 +63,9 @@ public abstract class QueryBase<K, T extends PersistentBase>
   protected long limit = 0; // 0 means no limit
   protected int offset = 0; // 0 is the right initial value.
 
+  protected String sortingField;
+  protected boolean isAscendant;
+
   private Configuration conf;
 
   public QueryBase(DataStore<K,T> dataStore) {
@@ -116,6 +119,26 @@ public abstract class QueryBase<K, T extends PersistentBase>
 
   public String getQueryString(){
     return queryString;
+  }
+
+  @Override
+  public void setSortingField(String field){
+    this.sortingField = field;
+  }
+
+  @Override
+  public void setSortingOrder(boolean isAscendant){
+    this.isAscendant = isAscendant;
+  }
+
+  @Override
+  public boolean isSortingAscendant(){
+    return this.isAscendant;
+  }
+
+  @Override
+  public  String getSortingField(){
+    return this.sortingField;
   }
 
   public void setQueryString(String queryString){
@@ -257,6 +280,8 @@ public abstract class QueryBase<K, T extends PersistentBase>
         throw new IOException(e);
       }
     }
+    if(!nullFields[5])
+      sortingField = WritableUtils.readString(in);
 
     startTime = WritableUtils.readVLong(in);
     endTime = WritableUtils.readVLong(in);
@@ -272,7 +297,7 @@ public abstract class QueryBase<K, T extends PersistentBase>
     dataStore.write(out);
 
     IOUtils.writeNullFieldsInfo(out, queryString, (fields)
-      , startKey, endKey, filter);
+      , startKey, endKey, filter, sortingField);
 
     if(queryString != null)
       Text.writeString(out, queryString);
@@ -286,6 +311,8 @@ public abstract class QueryBase<K, T extends PersistentBase>
       Text.writeString(out, filter.getClass().getCanonicalName());
       filter.write(out);
     }
+    if(sortingField!=null)
+      WritableUtils.writeString(out, getSortingField());
 
     WritableUtils.writeVLong(out, getStartTime());
     WritableUtils.writeVLong(out, getEndTime());

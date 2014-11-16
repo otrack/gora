@@ -31,6 +31,8 @@ public class InfinispanPartitionQuery<K,T extends PersistentBase> extends Infini
     this.setLimit(query.getLimit());
     this.setOffset(query.getOffset());
     this.setQueryString(query.getQueryString());
+    this.setSortingField(query.getSortingField());
+    this.setSortingOrder(query.isSortingAscendant());
   }
 
   @Override

@@ -184,7 +184,9 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
     InfinispanPartitionQuery<K,T> partitionQuery;
 
     int cacheSize = getClient().getCache().size();
-    for(int i=0; i<cacheSize/partitionSize; i++) {
+    long limit = query.getLimit();
+    long size = limit>0 ? Math.min((long)cacheSize,limit) : cacheSize;
+    for(int i=0; i<size/partitionSize; i++) {
 
       // build query
       partitionQuery = new InfinispanPartitionQuery<>((InfinispanQuery<K, T>) query);

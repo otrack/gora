@@ -25,6 +25,8 @@ package org.apache.gora.infinispan.store;
 
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.WebPage;
+import org.apache.gora.filter.FilterOp;
+import org.apache.gora.filter.SingleFieldValueFilter;
 import org.apache.gora.infinispan.GoraInfinispanTestDriver;
 import org.apache.gora.infinispan.query.InfinispanPartitionQuery;
 import org.apache.gora.infinispan.query.InfinispanQuery;
@@ -36,6 +38,7 @@ import org.apache.gora.store.DataStoreTestUtil;
 import org.apache.gora.util.TestIOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -56,11 +59,13 @@ public class InfinispanStoreTest extends DataStoreTestBase {
   private InfinispanStore<String,Employee> employeeDataStore;
   private InfinispanStore<String,WebPage> webPageDataStore;
 
-  static {
+  @BeforeClass
+  public static void setUpClass() throws Exception {
     List<String> cacheNames = new ArrayList<>();
     cacheNames.add(Employee.class.getSimpleName());
     cacheNames.add(WebPage.class.getSimpleName());
     setTestDriver(new GoraInfinispanTestDriver(3, 3, cacheNames));
+    DataStoreTestBase.setUpClass();
   }
 
   @Before
@@ -117,6 +122,30 @@ public class InfinispanStoreTest extends DataStoreTestBase {
       p.build();
       assertEquals(10, p.list().size());
     }
+
+    // Test matching everything
+    query = new InfinispanQuery<>(employeeDataStore);
+    SingleFieldValueFilter filter = new SingleFieldValueFilter();
+    filter.setFieldName("name");
+    filter.setFilterOp(FilterOp.LIKE);
+    List<Object> operaands = new ArrayList<>();
+    operaands.add("*");
+    filter.setOperands(operaands);
+    query.setFilter(filter);
+    query.build();
+    assertEquals(100,query.list().size());
+
+    // Test matching nothing
+    query = new InfinispanQuery<>(employeeDataStore);
+    filter = new SingleFieldValueFilter();
+    filter.setFieldName("name");
+    filter.setFilterOp(FilterOp.UNLIKE);
+    operaands.clear();
+    operaands.add("*");
+    filter.setOperands(operaands);
+    query.setFilter(filter);
+    query.build();
+    assertEquals(0,query.list().size());
 
   }
 

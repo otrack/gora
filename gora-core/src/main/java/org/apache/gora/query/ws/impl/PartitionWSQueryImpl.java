@@ -208,7 +208,27 @@ public class PartitionWSQueryImpl<K, T extends Persistent>
   public boolean isLocalFilterEnabled() {
     return localFilterEnabled;
   }
-  
+
+  @Override
+  public void setSortingField(String field) {
+    baseQuery.setSortingField(field);
+  }
+
+  @Override
+  public String getSortingField() {
+    return baseQuery.getSortingField();
+  }
+
+  @Override
+  public void setSortingOrder(boolean isAscendant) {
+    baseQuery.setSortingOrder(isAscendant);
+  }
+
+  @Override
+  public boolean isSortingAscendant() {
+    return baseQuery.isSortingAscendant();
+  }
+
   @Override
   public void setLocalFilterEnabled(boolean enable) {
     this.localFilterEnabled=enable;

@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
-
+import static org.infinispan.query.remote.avro.ValueWrapperFieldBridge.DELIMITER;
 
 /*
  * * @author Pierre Sutra, Valerio Schiavoni
@@ -47,9 +47,13 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
 
     if (filter instanceof  MapFieldValueFilter){
       MapFieldValueFilter mfilter = (MapFieldValueFilter) filter;
+      if (!(mfilter.getMapKey() instanceof String))
+        throw new IllegalAccessError("Invalid map key, must be a string.");
       if (mfilter.getOperands().size()>1)
         throw new IllegalAccessError("MapFieldValueFilter operand not supported.");
-      String value = mfilter.getMapKey()+"::"+mfilter.getOperands().get(0).toString();
+      if (!(mfilter.getOperands().get(0) instanceof String))
+        throw new IllegalAccessError("Invalid operand, must be a string.");
+      String value = mfilter.getMapKey()+DELIMITER+mfilter.getOperands().get(0).toString();
       switch (mfilter.getFilterOp()) {
         case EQUALS:
           context = qb.having(mfilter.getFieldName()).eq(value);
@@ -65,6 +69,12 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
             ((MapFieldValueFilter) filter).setFilterIfMissing(false);
           }
           break;
+        case LIKE:
+          context = qb.having(mfilter.getFieldName()).like(value);
+          break;
+        case UNLIKE:
+          context = qb.not().having(mfilter.getFieldName()).like(value);
+          break;
         default:
           throw new IllegalAccessError("FilterOp not supported..");
       }
@@ -77,6 +87,16 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
       switch (sfilter.getFilterOp()) {
         case EQUALS:
           context = qb.having(sfilter.getFieldName()).eq(value);
+          break;
+        case LIKE:
+          if (!(value instanceof String))
+            throw new IllegalAccessError("Invalid operand, it must be a string.");
+          context = qb.having(sfilter.getFieldName()).like((String)value);
+          break;
+        case UNLIKE:
+          if (!(value instanceof String))
+            throw new IllegalAccessError("Invalid operand, it must be a string.");
+          context = qb.not().having(sfilter.getFieldName()).like((String)value);
           break;
         case NOT_EQUALS:
           context = qb.not().having(sfilter.getFieldName()).eq(value);
@@ -122,7 +142,9 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
       qb.setProjection(fieldsWithPrimary);
     }
 
-    qb.orderBy(getPrimaryFieldName(), SortOrder.ASC);
+    qb.orderBy(
+      (getSortingField()==null) ? getPrimaryFieldName() : getSortingField(),
+      isSortingAscendant() ? SortOrder.ASC : SortOrder.DESC);
 
     if (this.getOffset()>0)
       qb.startOffset(this.getOffset());

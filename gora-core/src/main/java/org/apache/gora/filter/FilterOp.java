@@ -23,6 +23,8 @@ package org.apache.gora.filter;
 public enum FilterOp {
   EQUALS,
   NOT_EQUALS,
+  LIKE,
+  UNLIKE,
   LESS,
   LESS_OR_EQUAL,
   GREATER,
