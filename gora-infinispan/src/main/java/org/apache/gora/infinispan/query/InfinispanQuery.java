@@ -11,8 +11,10 @@ import org.infinispan.query.dsl.SortOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import static org.infinispan.query.remote.avro.ValueWrapperFieldBridge.DELIMITER;
 
 /*
@@ -137,9 +139,12 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
 
     // if projection enabled, keep the primary field.
     if (fields!=null && fields.length > 0) {
-      String[] fieldsWithPrimary = Arrays.copyOf(fields, fields.length + 1);
-      fieldsWithPrimary[fields.length] = getPrimaryFieldName();
-      qb.setProjection(fieldsWithPrimary);
+      List<String> fieldsList = new ArrayList<>(Arrays.asList(fields));
+      if (!fieldsList.contains(getPrimaryFieldName())) {
+        String[] fieldsWithPrimary = Arrays.copyOf(fields, fields.length + 1);
+        fieldsWithPrimary[fields.length] = getPrimaryFieldName();
+        qb.setProjection(fieldsWithPrimary);
+      }
     }
 
     qb.orderBy(
