@@ -183,9 +183,15 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
     List<PartitionQuery<K,T>> partitionQueries = new ArrayList<>();
     InfinispanPartitionQuery<K,T> partitionQuery;
 
-    int cacheSize = getClient().getCache().size();
+    // compute the size of the results before splitting the query.
+    InfinispanPartitionQuery<K,T> sizeQuery
+      = new InfinispanPartitionQuery<>((InfinispanQuery<K,T>) query);
+    sizeQuery.setFields(primaryFieldName);
+    sizeQuery.build();
+    int resultSize = sizeQuery.list().size();
+
     long limit = query.getLimit();
-    long size = limit>0 ? Math.min((long)cacheSize,limit) : cacheSize;
+    long size = limit>0 ? Math.min((long)resultSize,limit) : resultSize;
     for(int i=0; i<size/partitionSize; i++) {
 
       // build query
@@ -198,7 +204,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
       partitionQueries.add(partitionQuery);
 
       // if last remove limit
-      if (i+partitionSize >= cacheSize)
+      if (i+partitionSize >= resultSize)
         partitionQuery.setLimit(-1);
 
     }
@@ -237,7 +243,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
   @Override
   public void put(K key, T obj) {
 
-    LOG.info("put " + key.toString() + "=>" + obj.toString());
+    LOG.debug("put " + key.toString() + "=>" + obj.toString());
 
     if (obj.get(primaryFieldPos)==null)
       obj.put(primaryFieldPos,key);
