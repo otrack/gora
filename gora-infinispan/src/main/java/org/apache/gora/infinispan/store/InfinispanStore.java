@@ -143,7 +143,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
    */
   @Override
   public Result<K, T> execute(Query<K, T> query) {
-    return new InfinispanResult<K, T>(this, (InfinispanQuery<K,T>)query);
+    return new InfinispanResult<>(this, (InfinispanQuery<K,T>)query);
   }
 
   @Override
@@ -187,11 +187,16 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
     InfinispanPartitionQuery<K,T> sizeQuery
       = new InfinispanPartitionQuery<>((InfinispanQuery<K,T>) query);
     sizeQuery.setFields(primaryFieldName);
+    sizeQuery.setLimit(1);
     sizeQuery.build();
-    int resultSize = sizeQuery.list().size();
-
+    int resultSize = sizeQuery.getResultSize();
     long limit = query.getLimit();
     long size = limit>0 ? Math.min((long)resultSize,limit) : resultSize;
+
+    LOG.info("Limit of query: "+ query.getLimit());
+    LOG.info("Result size: "+resultSize);
+    LOG.info("Expected result/partition size: "+size+"/"+partitionSize);
+
     for(int i=0; i<size/partitionSize; i++) {
 
       // build query
