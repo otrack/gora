@@ -46,9 +46,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static junit.framework.Assert.assertNotNull;
 import static org.apache.gora.store.DataStoreFactory.GORA_CONNECTION_STRING_KEY;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Test for {@link InfinispanStore}.
@@ -64,7 +64,7 @@ public class InfinispanStoreTest extends DataStoreTestBase {
     List<String> cacheNames = new ArrayList<>();
     cacheNames.add(Employee.class.getSimpleName());
     cacheNames.add(WebPage.class.getSimpleName());
-    setTestDriver(new GoraInfinispanTestDriver(3, 3, cacheNames));
+    setTestDriver(new GoraInfinispanTestDriver(1, 1, cacheNames));
     DataStoreTestBase.setUpClass();
   }
 
@@ -92,11 +92,8 @@ public class InfinispanStoreTest extends DataStoreTestBase {
   }
 
   @Test
-  public void testReadWriteQuery() throws Exception {
-
+  public void testQueryMarshability() throws Exception {
     DataStoreTestUtil.populateEmployeeStore(employeeStore, 100);
-
-    // Marshability
     InfinispanQuery<String,Employee> query = new InfinispanQuery<>(employeeDataStore);
     query.setFields("field");
     query.setKeyRange("1", "1");
@@ -105,8 +102,14 @@ public class InfinispanStoreTest extends DataStoreTestBase {
     query.build();
     TestIOUtils.testSerializeDeserialize(query);
     assertNotNull(query.getDataStore());
+  }
 
-    // Correct sizes
+  @Test
+  public void testReadWriteQuery() throws Exception {
+    DataStoreTestUtil.populateEmployeeStore(employeeStore, 100);
+    InfinispanQuery<String,Employee> query;
+
+    // Correct limit of returned results
     for (int i=1; i<=100; i++) {
       query = new InfinispanQuery<>(employeeDataStore);
       query.setLimit(i);
@@ -119,7 +122,6 @@ public class InfinispanStoreTest extends DataStoreTestBase {
     query = new InfinispanQuery<>(employeeDataStore);
     for (PartitionQuery<String,Employee> q : employeeDataStore.getPartitions(query)) {
       InfinispanPartitionQuery<String,Employee> p = (InfinispanPartitionQuery) q;
-      p.build();
       assertEquals(10, p.list().size());
     }
 

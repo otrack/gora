@@ -108,6 +108,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
   public void close() {
     LOG.debug("close");
     flush();
+    infinispanClient.close();
   }
 
   @Override
@@ -216,7 +217,6 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
     if (partitionQueries.size()==0) {
       partitionQuery = new InfinispanPartitionQuery<>((InfinispanQuery<K, T>) query);
-      partitionQuery.build();
       partitionQueries.add(partitionQuery);
     }
 
@@ -225,7 +225,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
   @Override
   public void flush() {
-    LOG.info("No caching done yet.");
+    infinispanClient.flush();
   }
 
   /**

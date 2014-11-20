@@ -162,11 +162,6 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
     if(q==null)
       throw new IllegalAccessError("Build before list.");
 
-    if (LOG.isDebugEnabled()) {
-      for (Object t : q.list())
-        LOG.debug("put " + t.toString());
-    }
-
     return q.list();
 
   }

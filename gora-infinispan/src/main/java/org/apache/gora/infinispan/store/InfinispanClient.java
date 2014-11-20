@@ -37,8 +37,11 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static org.apache.gora.store.DataStoreFactory.GORA_CONNECTION_STRING_DEFAULT;
 import static org.apache.gora.store.DataStoreFactory.GORA_CONNECTION_STRING_KEY;
@@ -63,6 +66,8 @@ public class InfinispanClient<K, T extends PersistentBase> implements
   private BasicCache<K, T> cache;
   private boolean cacheExists;
 
+  private Collection<Future> futureCollection;
+
   public InfinispanClient() {
     conf = new Configuration();
   }
@@ -84,6 +89,8 @@ public class InfinispanClient<K, T extends PersistentBase> implements
       true,
       createPartitioner(properties));
     qf = org.infinispan.ensemble.search.Search.getQueryFactory((EnsembleCache)cache);
+
+    futureCollection = new ArrayList<>();
 
   }
 
@@ -107,8 +114,9 @@ public class InfinispanClient<K, T extends PersistentBase> implements
     cache.remove(key);
   }
 
-  public void put(K key, T val) {
-    this.cache.put(key, val);
+  public synchronized void put(K key, T val) {
+    // this.cache.putAsync(key, val);
+    futureCollection.add(this.cache.putAsync(key, val));
   }
 
   public void putifabsent(K key, T obj) {
@@ -168,4 +176,20 @@ public class InfinispanClient<K, T extends PersistentBase> implements
     return conf;
   }
 
+
+  public synchronized void flush(){
+    for(Future future : futureCollection){
+      try {
+        future.get();
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
+    }
+    futureCollection.clear();
+  }
+
+  public void close() {
+    flush();
+    getCache().stop();
+  }
 }
