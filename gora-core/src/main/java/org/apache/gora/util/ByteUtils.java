@@ -686,7 +686,7 @@ public class ByteUtils {
     case ENUM:
       String symbol = schema.getEnumSymbols().get(val[0]);
       return (T)Enum.valueOf(ReflectData.get().getClass(schema), symbol);
-    case STRING:  return (T)new Utf8(toString(val));
+    case STRING:  return (T)toString(val);
     case BYTES:   return (T)ByteBuffer.wrap(val);
     case INT:     return (T)Integer.valueOf(bytesToVint(val));
     case LONG:    return (T)Long.valueOf(bytesToVlong(val));

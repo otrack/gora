@@ -56,6 +56,7 @@ public class DataStoreTestUtil {
 
   public static final long YEAR_IN_MS = 365L * 24L * 60L * 60L * 1000L;
   private static final int NUM_KEYS = 4;
+  private static Random rand = new Random(System.currentTimeMillis());
 
   public static <K, T extends Persistent> void testNewPersistent(
       DataStore<K,T> dataStore) throws IOException, Exception {
@@ -88,21 +89,22 @@ public class DataStoreTestUtil {
     return employee;
   }
 
-  public static Employee createEmployee() {
+  public static Employee createEmployee(int i) {
     Employee employee = Employee.newBuilder().build();
-    employee.setName(Long.toString(System.currentTimeMillis()));
-    employee.setDateOfBirth(System.currentTimeMillis() - 20L * YEAR_IN_MS);
-    employee.setSalary((int) System.currentTimeMillis());
-    employee.setSsn(Long.toString(System.currentTimeMillis()));
+    employee.setSsn(Long.toString(i));
+    employee.setName(Long.toString(rand.nextLong()));
+    employee.setDateOfBirth(rand.nextLong() - 20L * YEAR_IN_MS);
+    employee.setSalary(rand.nextInt());
     return employee;
   }
 
   public static void populateEmployeeStore(
     DataStore<String, Employee> dataStore, int n){
     for(int i=0; i<n; i++) {
-      Employee e = createEmployee();
+      Employee e = createEmployee(i);
       dataStore.put(e.getSsn(),e);
     }
+    dataStore.flush();
   }
 
   private static WebPage createWebPage() {

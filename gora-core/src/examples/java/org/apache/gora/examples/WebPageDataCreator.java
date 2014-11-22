@@ -18,7 +18,6 @@
 
 package org.apache.gora.examples;
 
-import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.generated.Metadata;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.store.DataStore;
@@ -142,7 +141,8 @@ public class WebPageDataCreator {
     }
     catch(Exception e){
       log.info("error creating web page data");
-    } 
+    }
+    dataStore.flush();
   }
   
   public int run(String[] args) throws Exception {

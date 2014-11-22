@@ -85,9 +85,6 @@ public class SingleFieldValueFilter<K, T extends PersistentBase> implements Filt
     int operandsSize = WritableUtils.readVInt(in);
     for (int i = 0; i < operandsSize; i++) {
       Object operand = ObjectWritable.readObject(in, conf);
-      if (operand instanceof String) {
-        operand=new Utf8((String) operand);
-      }
       operands.add(operand);
     }
     filterIfMissing = in.readBoolean();

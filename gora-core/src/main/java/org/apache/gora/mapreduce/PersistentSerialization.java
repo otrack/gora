@@ -32,7 +32,7 @@ implements Serialization<Persistent> {
 
   @Override
   public Deserializer<Persistent> getDeserializer(Class<Persistent> c) {
-    return new PersistentDeserializer(c, true);
+    return new PersistentDeserializer(c, false); // FIXME this should be a parameter
   }
 
   @Override
