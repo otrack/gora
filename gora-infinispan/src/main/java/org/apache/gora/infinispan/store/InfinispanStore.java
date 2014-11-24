@@ -107,7 +107,6 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
   @Override
   public void close() {
     LOG.debug("close");
-    flush();
     infinispanClient.close();
   }
 
@@ -194,9 +193,9 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
     long limit = query.getLimit();
     long size = limit>0 ? Math.min((long)resultSize,limit) : resultSize;
 
-    LOG.info("Limit of query: "+ query.getLimit());
-    LOG.info("Result size: "+resultSize);
-    LOG.info("Expected result/partition size: "+size+"/"+partitionSize);
+    LOG.debug("Limit of query: "+ query.getLimit());
+    LOG.debug("Result size: "+resultSize);
+    LOG.debug("Expected result/partition size: "+size+"/"+partitionSize);
 
     for(int i=0; i<size/partitionSize; i++) {
 
@@ -225,6 +224,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
   @Override
   public void flush() {
+    LOG.debug("flush");
     infinispanClient.flush();
   }
 
@@ -270,7 +270,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
     if (!obj.get(primaryFieldPos).equals(key) )
       LOG.warn("Invalid or different primary field !");
 
-    this.infinispanClient.putifabsent(key, obj);
+    this.infinispanClient.putIfAbsent(key, obj);
 
   }
 

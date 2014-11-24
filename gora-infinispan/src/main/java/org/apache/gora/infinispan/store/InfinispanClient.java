@@ -36,10 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -72,7 +69,10 @@ public class InfinispanClient<K, T extends PersistentBase> implements
     conf = new Configuration();
   }
 
-  public void initialize(Class<K> keyClass, Class<T> persistentClass, Properties properties) throws Exception {
+  public synchronized void initialize(Class<K> keyClass, Class<T> persistentClass, Properties properties) throws Exception {
+
+    if (cache!=null)
+      return; // already initialized.
 
     String host = properties.getProperty(GORA_CONNECTION_STRING_KEY,
       getConf().get(GORA_CONNECTION_STRING_KEY,GORA_CONNECTION_STRING_DEFAULT));
@@ -90,7 +90,7 @@ public class InfinispanClient<K, T extends PersistentBase> implements
       createPartitioner(properties));
     qf = org.infinispan.ensemble.search.Search.getQueryFactory((EnsembleCache)cache);
 
-    futureCollection = new ArrayList<>();
+    futureCollection = new LinkedList<>();
 
   }
 
@@ -115,12 +115,12 @@ public class InfinispanClient<K, T extends PersistentBase> implements
   }
 
   public synchronized void put(K key, T val) {
-    // this.cache.putAsync(key, val);
-    futureCollection.add(this.cache.putAsync(key, val));
+    // this.cache.put(key, val);
+    futureCollection.add(cache.putAsync(key, val));
   }
 
-  public void putifabsent(K key, T obj) {
-    this.cache.putIfAbsent(key,obj);
+  public void putIfAbsent(K key, T obj) {
+    futureCollection.add(this.cache.putIfAbsentAsync(key,obj));
   }
 
   public T get(K key){
@@ -178,18 +178,20 @@ public class InfinispanClient<K, T extends PersistentBase> implements
 
 
   public synchronized void flush(){
-    for(Future future : futureCollection){
+    LOG.debug("flush");
       try {
-        future.get();
+        for (Future future : futureCollection)
+          future.get();
       } catch (InterruptedException | ExecutionException e) {
         e.printStackTrace();
       }
-    }
     futureCollection.clear();
   }
 
   public void close() {
+    LOG.debug("close");
     flush();
     getCache().stop();
+    cacheManager.stop();
   }
 }

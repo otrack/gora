@@ -89,7 +89,7 @@ public class GoraInfinispanTestDriver extends GoraTestDriver {
     delegate.destroy();
   }
 
-   @Override
+  @Override
   public<K, T extends Persistent> DataStore<K,T>
   createDataStore(Class<K> keyClass, Class<T> persistentClass) throws GoraException {
     InfinispanStore store = (InfinispanStore) super.createDataStore(keyClass, persistentClass);
