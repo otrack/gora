@@ -64,14 +64,15 @@ public class InfinispanStoreTest extends DataStoreTestBase {
     List<String> cacheNames = new ArrayList<>();
     cacheNames.add(Employee.class.getSimpleName());
     cacheNames.add(WebPage.class.getSimpleName());
-    setTestDriver(new GoraInfinispanTestDriver(3, 3, cacheNames));
+    setTestDriver(new GoraInfinispanTestDriver(1, 1, cacheNames));
     DataStoreTestBase.setUpClass();
   }
 
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    conf = getTestDriver().getConfiguration();
+    GoraInfinispanTestDriver driver = getTestDriver();
+    conf = driver.getConfiguration();
     conf.set(GORA_CONNECTION_STRING_KEY,getTestDriver().connectionString());
     employeeDataStore = (InfinispanStore<String, Employee>) employeeStore;
     webPageDataStore = (InfinispanStore<String, WebPage>) webPageStore;
@@ -113,6 +114,7 @@ public class InfinispanStoreTest extends DataStoreTestBase {
     for (int i=1; i<=100; i++) {
       query = new InfinispanQuery<>(employeeDataStore);
       query.setLimit(i);
+      query.setOffset(0);
       query.build();
       assertEquals(i, query.list().size());
     }

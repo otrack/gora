@@ -89,25 +89,35 @@ public class InfinispanClient<K, T extends PersistentBase> implements
       true,
       createPartitioner(properties));
     qf = org.infinispan.ensemble.search.Search.getQueryFactory((EnsembleCache)cache);
+    createSchema();
 
     futureCollection = new LinkedList<>();
 
   }
 
-  public boolean cacheExists() {
+  public boolean cacheExists(){
     return cacheExists;
+  }
+
+  public void createSchema() {
+    try {
+      cacheManager.loadSchema(persistentClass.newInstance().getSchema());
+    } catch (InstantiationException | IllegalAccessException e) {
+      e.printStackTrace();
+    }
   }
 
   /**
    * Check if cache already exists. If not, create it.
    */
   public void createCache() {
-    cacheExists = true; // FIXME
+    createSchema();
+    cacheExists = true;
   }
 
   public void dropCache() {
-    cacheExists = false; // FIXME
     cache.clear();
+    cacheExists = false;
   }
 
   public void deleteByKey(K key) {
