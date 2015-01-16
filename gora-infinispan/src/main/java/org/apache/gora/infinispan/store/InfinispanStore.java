@@ -208,8 +208,8 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
       // add to the list
       partitionQueries.add(partitionQuery);
 
-      // if last remove limit
-      if (i == size/partitionSize -1)
+      // if last and no limit in the original query, remove limit in the partition
+      if ( limit<=0 && (i == size/partitionSize -1) )
         partitionQuery.setLimit(-1);
 
     }

@@ -130,7 +130,7 @@ public class InfinispanClient<K, T extends PersistentBase> implements
   }
 
   public void putIfAbsent(K key, T obj) {
-    futureCollection.add(this.cache.putIfAbsentAsync(key,obj));
+    this.cache.putIfAbsent(key,obj);
   }
 
   public T get(K key){
