@@ -613,8 +613,8 @@
         <avro.version>1.7.6</avro.version>
         <jackson.version>1.8.8</jackson.version>
         <!-- Hadoop Dependencies -->
-        <hadoop.version>2.2.0</hadoop.version>
-        <hadoop.test.version>2.2.0</hadoop.test.version>
+        <hadoop.version>2.5.2</hadoop.version>
+        <hadoop.test.version>2.5.2</hadoop.test.version>
         <hbase.version>0.94.14</hbase.version>
         <cxf-rt-frontend-jaxrs.version>2.5.2</cxf-rt-frontend-jaxrs.version>
         <!-- Amazon Dependencies -->

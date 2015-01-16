@@ -216,6 +216,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
     if (partitionQueries.size()==0) {
       partitionQuery = new InfinispanPartitionQuery<>((InfinispanQuery<K, T>) query);
+      partitionQuery.build();
       partitionQueries.add(partitionQuery);
     }
 

@@ -131,16 +131,6 @@
         <!-- Infinispan Dependencies -->
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-remote-query-server</artifactId>
-            <version>${infinispan.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-versioning</artifactId>
-            <version>${infinispan.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-query-dsl</artifactId>
             <version>${infinispan.version}</version>
         </dependency>
