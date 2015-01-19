@@ -158,7 +158,7 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
   }
 
   public List<T> list(){
-
+    LOG.debug("list()"+":IN");
     if(q==null)
       throw new IllegalAccessError("Build before list.");
 
@@ -170,6 +170,7 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
       }
     }
 
+    LOG.debug("list()"+":OUT");
     return ret;
 
   }
@@ -179,5 +180,9 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
   }
 
   public String getPrimaryFieldName(){ return ((InfinispanStore)dataStore).getPrimaryFieldName();}
+
+  public String toString(){
+    return "Q:"+q.toString();
+  }
 
 }

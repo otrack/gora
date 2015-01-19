@@ -106,24 +106,27 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
   @Override
   public void close() {
-    LOG.debug("close");
+    LOG.debug("close()");
     infinispanClient.close();
   }
 
   @Override
   public void createSchema() {
-    LOG.debug("creating Infinispan cache");
+    LOG.debug("createSchema()");
     this.infinispanClient.createCache();
   }
 
   @Override
   public boolean delete(K key) {
+    LOG.debug("delete("+key+")");
     this.infinispanClient.deleteByKey(key);
     return true;
   }
 
   @Override
   public long deleteByQuery(Query<K, T> query) {
+    ((InfinispanQuery<K,T>)query).build();
+    LOG.debug("deleteByQuery("+query.toString()+")");
     InfinispanQuery<K, T> q = (InfinispanQuery) query;
     q.build();
     for( T t : q.list()){
@@ -134,7 +137,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
   @Override
   public void deleteSchema() {
-    LOG.debug("delete schema");
+    LOG.debug("deleteSchema()");
     this.infinispanClient.dropCache();
   }
 
@@ -143,22 +146,26 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
    */
   @Override
   public Result<K, T> execute(Query<K, T> query) {
+    ((InfinispanQuery<K,T>)query).build();
+    LOG.debug("execute("+query+")");
     return new InfinispanResult<>(this, (InfinispanQuery<K,T>)query);
   }
 
   @Override
   public T get(K key){
+    LOG.debug("get("+key+")");
     return infinispanClient.get(key);
   }
 
   @Override
   public boolean containsKey(K key){
+    LOG.debug("containsKey("+key+")");
     return infinispanClient.containsKey(key);
   }
 
   @Override
   public T get(K key, String[] fields) {
-
+    LOG.debug("get("+key+","+fields+")");
     if (fields==null)
       return infinispanClient.get(key);
 
@@ -180,6 +187,9 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
   public List<PartitionQuery<K, T>> getPartitions(Query<K, T> query)
     throws IOException {
 
+    ((InfinispanQuery)query).build();
+    LOG.debug("getPartitions("+query+")");
+    
     List<PartitionQuery<K,T>> partitionQueries = new ArrayList<>();
     InfinispanPartitionQuery<K,T> partitionQuery;
 
@@ -189,6 +199,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
     sizeQuery.setFields(primaryFieldName);
     sizeQuery.setLimit(1);
     sizeQuery.build();
+    
     int resultSize = sizeQuery.getResultSize();
     long limit = query.getLimit();
     long size = limit>0 ? Math.min((long)resultSize,limit) : resultSize;
@@ -197,7 +208,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
     LOG.debug("Result size: "+resultSize);
     LOG.debug("Expected result/partition size: "+size+"/"+partitionSize);
 
-    for(int i=0; i<size/partitionSize; i++) {
+    for(int i=0; i<Math.ceil((double)size/(double)partitionSize); i++) {
 
       // build query
       partitionQuery = new InfinispanPartitionQuery<>((InfinispanQuery<K, T>) query);
@@ -207,10 +218,6 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
       // add to the list
       partitionQueries.add(partitionQuery);
-
-      // if last and no limit in the original query, remove limit in the partition
-      if ( limit<=0 && (i == size/partitionSize -1) )
-        partitionQuery.setLimit(-1);
 
     }
 
@@ -225,7 +232,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
   @Override
   public void flush() {
-    LOG.debug("flush");
+    LOG.debug("flush()");
     infinispanClient.flush();
   }
 
@@ -236,11 +243,13 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
    */
   @Override
   public String getSchemaName() {
+    LOG.debug("getSchemaName()");
     return this.infinispanClient.getCacheName();
   }
 
   @Override
   public Query<K, T> newQuery() {
+    LOG.debug("newQuery()");
     Query<K, T> query = new InfinispanQuery<K, T>(this);
     query.setFields(getFieldsToQuery(null));
     return query;
@@ -248,8 +257,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
   @Override
   public void put(K key, T obj) {
-
-    LOG.debug("put " + key.toString() + "=>" + obj.toString());
+    LOG.debug("put("+key.toString()+","+obj.toString()+")");
 
     if (obj.get(primaryFieldPos)==null)
       obj.put(primaryFieldPos,key);
@@ -262,8 +270,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
   @Override
   public void putIfAbsent(K key, T obj){
-
-    LOG.info("putIfabsent " + key.toString() + "=>" + obj.toString());
+    LOG.debug("putIfAbsent("+key.toString()+","+obj.toString()+")");
 
     if (obj.get(primaryFieldPos)==null)
       obj.put(primaryFieldPos,key);
@@ -277,31 +284,37 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
   @Override
   public boolean schemaExists() {
-    LOG.info("schema exists");
+    LOG.debug("schemaExists()");
     return infinispanClient.cacheExists();
   }
 
   public InfinispanClient<K, T> getClient() {
+    LOG.debug("getClient()");
     return infinispanClient;
   }
 
   public String getPrimaryFieldName() {
+    LOG.debug("getPrimaryField()");
     return primaryFieldName;
   }
 
   public void setPrimaryFieldName(String name){
+    LOG.debug("getPrimaryFieldName()");
     primaryFieldName = name;
   }
 
   public int getPrimaryFieldPos(){
+    LOG.info("getPrimaryFieldPos()");
     return primaryFieldPos;
   }
 
   public void setPrimaryFieldPos(int p){
+    LOG.debug("setPrimaryFieldPos()");
     primaryFieldPos = p;
   }
 
   public void setPartitionSize(int i) {
+    LOG.debug("setPartitionSize()");
     partitionSize = i;
   }
 }
