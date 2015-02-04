@@ -28,7 +28,6 @@ import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.filter.FilterOp;
 import org.apache.gora.filter.SingleFieldValueFilter;
 import org.apache.gora.infinispan.GoraInfinispanTestDriver;
-import org.apache.gora.infinispan.query.InfinispanPartitionQuery;
 import org.apache.gora.infinispan.query.InfinispanQuery;
 import org.apache.gora.mapreduce.MapReduceTestUtils;
 import org.apache.gora.query.PartitionQuery;
@@ -107,26 +106,19 @@ public class InfinispanStoreTest extends DataStoreTestBase {
 
   @Test
   public void testReadWriteQuery() throws Exception {
-    DataStoreTestUtil.populateEmployeeStore(employeeStore, 100);
+    final int NEMPLOYEE = 100;
+    DataStoreTestUtil.populateEmployeeStore(employeeStore, NEMPLOYEE);
     InfinispanQuery<String,Employee> query;
 
-    // Correct limit of returned results
-    for (int i=1; i<=100; i++) {
-      query = new InfinispanQuery<>(employeeDataStore);
-      query.setLimit(i);
-      query.setOffset(0);
-      query.build();
-      assertEquals(i, query.list().size());
-    }
-
     // Partitioning
-    employeeDataStore.setPartitionSize(10);
+    int retrieved = 0;
     query = new InfinispanQuery<>(employeeDataStore);
+    query.build();
     for (PartitionQuery<String,Employee> q : employeeDataStore.getPartitions(query)) {
-      InfinispanPartitionQuery<String,Employee> p = (InfinispanPartitionQuery) q;
-      assertEquals(10, p.list().size());
+      retrieved+=((InfinispanQuery<String,Employee>) q).list().size();
     }
-
+    assert retrieved==NEMPLOYEE;
+    
     // Test matching everything
     query = new InfinispanQuery<>(employeeDataStore);
     SingleFieldValueFilter filter = new SingleFieldValueFilter();
@@ -137,7 +129,11 @@ public class InfinispanStoreTest extends DataStoreTestBase {
     filter.setOperands(operaands);
     query.setFilter(filter);
     query.build();
-    assertEquals(100,query.list().size());
+    List<Employee> result = new ArrayList<>();
+    for (PartitionQuery<String,Employee> q : employeeDataStore.getPartitions(query)) {
+      result.addAll(((InfinispanQuery<String,Employee>)q).list());
+    }
+    assertEquals(NEMPLOYEE,result.size());
 
     // Test matching nothing
     query = new InfinispanQuery<>(employeeDataStore);

@@ -22,6 +22,8 @@ import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.gora.util.ClassLoadingUtils;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
+import org.infinispan.client.hotrod.impl.avro.AvroQueryBuilder;
+import org.infinispan.client.hotrod.impl.avro.AvroQueryFactory;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.ensemble.EnsembleCacheManager;
 import org.infinispan.ensemble.Site;
@@ -29,8 +31,6 @@ import org.infinispan.ensemble.cache.EnsembleCache;
 import org.infinispan.ensemble.cache.distributed.ClusteringBasedPartitioner;
 import org.infinispan.ensemble.cache.distributed.Coordinates;
 import org.infinispan.ensemble.cache.distributed.Partitioner;
-import org.infinispan.query.dsl.QueryBuilder;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.avro.AvroMarshaller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,8 +46,7 @@ import static org.apache.gora.store.DataStoreFactory.GORA_CONNECTION_STRING_KEY;
 /*
  * * @author Pierre Sutra, valerio schiavoni
  */
-public class InfinispanClient<K, T extends PersistentBase> implements
-  Configurable{
+public class InfinispanClient<K, T extends PersistentBase> implements Configurable{
 
   public static final Logger LOG = LoggerFactory.getLogger(InfinispanClient.class);
   public static final String INFINISPAN_PARTITIONER_KEY = "infinispan.partitioner.class";
@@ -58,12 +57,13 @@ public class InfinispanClient<K, T extends PersistentBase> implements
   private Class<K> keyClass;
   private Class<T> persistentClass;
   private EnsembleCacheManager cacheManager;
-  private QueryFactory qf;
+  private AvroQueryFactory qf;
 
   private BasicCache<K, T> cache;
   private boolean cacheExists;
 
-  private Collection<Future> futureCollection;
+  private Map<K,T> toAdd;
+  private Collection<Future> futures;
 
   public InfinispanClient() {
     conf = new Configuration();
@@ -73,7 +73,7 @@ public class InfinispanClient<K, T extends PersistentBase> implements
 
     if (cache!=null)
       return; // already initialized.
-
+    
     String host = properties.getProperty(GORA_CONNECTION_STRING_KEY,
       getConf().get(GORA_CONNECTION_STRING_KEY,GORA_CONNECTION_STRING_DEFAULT));
     LOG.info("Connecting client to "+host);
@@ -88,11 +88,12 @@ public class InfinispanClient<K, T extends PersistentBase> implements
       new ArrayList<>(cacheManager.sites()),
       true,
       createPartitioner(properties));
-    qf = org.infinispan.ensemble.search.Search.getQueryFactory((EnsembleCache)cache);
+    qf = (AvroQueryFactory) org.infinispan.ensemble.search.Search.getQueryFactory((EnsembleCache)cache);
     createSchema();
 
-    futureCollection = new LinkedList<>();
-
+    toAdd = new HashMap<>();
+    futures = new ArrayList<>();
+    
   }
 
   public boolean cacheExists(){
@@ -125,8 +126,7 @@ public class InfinispanClient<K, T extends PersistentBase> implements
   }
 
   public synchronized void put(K key, T val) {
-    // this.cache.put(key, val);
-    futureCollection.add(cache.putAsync(key, val));
+    toAdd.put(key,val);
   }
 
   public void putIfAbsent(K key, T obj) {
@@ -149,8 +149,8 @@ public class InfinispanClient<K, T extends PersistentBase> implements
     return this.cache;
   }
 
-  public QueryBuilder getQueryBuilder() {
-    return qf.from(persistentClass);
+  public AvroQueryBuilder getQueryBuilder() {
+    return (AvroQueryBuilder) qf.from(persistentClass);
   }
 
   public Partitioner<K,T> createPartitioner(Properties properties)
@@ -188,19 +188,24 @@ public class InfinispanClient<K, T extends PersistentBase> implements
 
 
   public synchronized void flush(){
-    LOG.debug("flush");
-      try {
-        for (Future future : futureCollection)
-          future.get();
-      } catch (InterruptedException | ExecutionException e) {
-        e.printStackTrace();
-      }
-    futureCollection.clear();
+    LOG.debug("flush()");
+    futures.add(cache.putAllAsync(toAdd));
+    toAdd = new HashMap<>();
   }
 
-  public void close() {
-    LOG.debug("close");
+  public synchronized void close() {
+    LOG.debug("close()");
     flush();
+    long start = System.currentTimeMillis();
+    for(Future future : futures) {
+      try {
+        future.get();
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+        // nothing to do.
+      }
+    }
+    LOG.info("closing  in " + (System.currentTimeMillis() - start));
     getCache().stop();
     cacheManager.stop();
   }

@@ -18,7 +18,6 @@
 
 package org.apache.gora.infinispan.store;
 
-import org.apache.gora.infinispan.query.InfinispanPartitionQuery;
 import org.apache.gora.infinispan.query.InfinispanQuery;
 import org.apache.gora.infinispan.query.InfinispanResult;
 import org.apache.gora.persistency.impl.PersistentBase;
@@ -34,6 +33,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import static  org.apache.gora.mapreduce.GoraRecordReader.BUFFER_LIMIT_READ_NAME;
+import static  org.apache.gora.mapreduce.GoraRecordReader.BUFFER_LIMIT_READ_VALUE;
+
 /**
  * {@link org.apache.gora.infinispan.store.InfinispanStore} is the primary class
  * responsible for directing Gora CRUD operations into Infinispan.
@@ -47,16 +49,10 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
   public static final Logger LOG = LoggerFactory.getLogger(InfinispanStore.class);
 
-  /**
-   * Infinispan store Parameters
-   */
-  public static final String PARTITION_SIZE_DEFAULT = "10000"; // for testing purposes only ( a well-known working value for M/R is 1000).
-  public static final String PARTITION_SIZE_KEY = "infinispan.partition.size";
-
   private InfinispanClient<K, T> infinispanClient;
   private String primaryFieldName;
   private int primaryFieldPos;
-  private int partitionSize;
+  private int splitSize;
 
   /**
    * The default constructor for InfinispanStore
@@ -78,25 +74,22 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
       infinispanClient  = new InfinispanClient<>();
       infinispanClient.setConf(conf);
 
-      LOG.info("InfinispanStore initializing with key class: "
+      LOG.info("key class: "
         + keyClass.getCanonicalName()
-        + " and persistent class: "
+        + ", persistent class: "
         + persistentClass.getCanonicalName());
       schema = persistentClass.newInstance().getSchema();
+
+      splitSize = Integer.valueOf(
+        properties.getProperty( BUFFER_LIMIT_READ_NAME,
+          getConf().get(
+            BUFFER_LIMIT_READ_NAME,
+            Integer.toString(BUFFER_LIMIT_READ_VALUE))));
+      LOG.info("split size: "+splitSize);
 
       primaryFieldPos = 0;
       primaryFieldName = schema.getFields().get(0).name();
       this.infinispanClient.initialize(keyClass, persistentClass, properties);
-
-      if (properties.getProperty(PARTITION_SIZE_KEY)!=null){
-        partitionSize = Integer.valueOf(properties.getProperty(PARTITION_SIZE_KEY));
-      } else {
-        partitionSize = Integer.valueOf(
-          conf.get(PARTITION_SIZE_KEY,
-            getConf().get(PARTITION_SIZE_KEY,PARTITION_SIZE_DEFAULT)));
-      }
-
-      LOG.info("Partition query size set to "+partitionSize);
 
     } catch (Exception e) {
       LOG.error(e.getMessage());
@@ -146,9 +139,12 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
    */
   @Override
   public Result<K, T> execute(Query<K, T> query) {
+    LOG.debug("execute()");
     ((InfinispanQuery<K,T>)query).build();
-    LOG.debug("execute("+query+")");
-    return new InfinispanResult<>(this, (InfinispanQuery<K,T>)query);
+    InfinispanResult<K,T> result = new InfinispanResult<>(this, (InfinispanQuery<K,T>)query);
+    LOG.trace("query: "+query.toString());
+    LOG.trace("result size: " + result.size());
+    return result;
   }
 
   @Override
@@ -174,60 +170,73 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
     query.setFields(fields);
     query.build();
 
-    List<T> l = query.list();
-    assert l.isEmpty() || l.size()==1;
-    if (l.isEmpty())
-      return null;
-
-    return l.get(0);
-
+    
+    Result<K,T> result = query.execute();
+    try {
+      result.next();
+      return result.get();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 
+  /**
+   * 
+   * Return a set of queries per infinispan node.
+   * Each set contains a "pagination" of the original query.
+   * The size of each query in this pagination 
+   * equals <i>gora.buffer.read.limit</i>.
+   *
+   * @param query the base query to create the partitions for. If the query
+   * is null, then the data store returns the partitions for the default query
+   * (returning every object)
+   * @return
+   * @throws IOException
+   */
   @Override
   public List<PartitionQuery<K, T>> getPartitions(Query<K, T> query)
-    throws IOException {
+    throws IOException {    
+    LOG.debug("getPartitions()");
 
-    ((InfinispanQuery)query).build();
-    LOG.debug("getPartitions("+query+")");
-    
-    List<PartitionQuery<K,T>> partitionQueries = new ArrayList<>();
-    InfinispanPartitionQuery<K,T> partitionQuery;
+    // 1 - split the query per location
+    List<PartitionQuery<K,T>> locations = ((InfinispanQuery<K,T>)query).split();
 
-    // compute the size of the results before splitting the query.
-    InfinispanPartitionQuery<K,T> sizeQuery
-      = new InfinispanPartitionQuery<>((InfinispanQuery<K,T>) query);
-    sizeQuery.setFields(primaryFieldName);
-    sizeQuery.setLimit(1);
-    sizeQuery.build();
-    
-    int resultSize = sizeQuery.getResultSize();
-    long limit = query.getLimit();
-    long size = limit>0 ? Math.min((long)resultSize,limit) : resultSize;
+    // 2 -split each location  
+    List<PartitionQuery<K,T>> splitLocations = new ArrayList<>();
+    for(PartitionQuery<K,T> location : locations) {
 
-    LOG.debug("Limit of query: "+ query.getLimit());
-    LOG.debug("Result size: "+resultSize);
-    LOG.debug("Expected result/partition size: "+size+"/"+partitionSize);
+      LOG.trace("location: "+ location.getLocations()[0]);
 
-    for(int i=0; i<Math.ceil((double)size/(double)partitionSize); i++) {
+      // 2.1 - compute the result size
+      InfinispanQuery<K,T> sizeQuery = (InfinispanQuery<K, T>) ((InfinispanQuery<K, T>) location).clone();
+      sizeQuery.setFields(primaryFieldName);
+      sizeQuery.setLimit(1);
+      sizeQuery.rebuild();
 
-      // build query
-      partitionQuery = new InfinispanPartitionQuery<>((InfinispanQuery<K, T>) query);
-      partitionQuery.setOffset(i * partitionSize);
-      partitionQuery.setLimit(partitionSize);
-      partitionQuery.build();
+      // 2.2 - check if splitting is necessary
+      int resultSize = sizeQuery.getResultSize();
+      long queryLimit = query.getLimit();
+      long splitLimit = queryLimit>0 ? Math.min((long)resultSize,queryLimit) : resultSize;
+      LOG.trace("split limit: "+ splitLimit);
+      LOG.trace("split size: "+ splitSize);
+      if (splitLimit <= splitSize) {
+        LOG.trace("location returned");
+        splitLocations.add(location);
+        continue;
+      }
 
-      // add to the list
-      partitionQueries.add(partitionQuery);
-
+      // 2.3 - compute the splits
+      for(int i=0; i<Math.ceil((double)splitLimit/(double)splitSize); i++) {
+        InfinispanQuery<K, T> split = (InfinispanQuery<K, T>) ((InfinispanQuery<K, T>) location).clone();
+        split.setOffset(i * splitSize);
+        split.setLimit(splitSize);
+        split.rebuild();
+        splitLocations.add(split);
+      }
     }
-
-    if (partitionQueries.size()==0) {
-      partitionQuery = new InfinispanPartitionQuery<>((InfinispanQuery<K, T>) query);
-      partitionQuery.build();
-      partitionQueries.add(partitionQuery);
-    }
-
-    return partitionQueries;
+    
+    return splitLocations; 
   }
 
   @Override
@@ -257,13 +266,14 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
 
   @Override
   public void put(K key, T obj) {
-    LOG.debug("put("+key.toString()+","+obj.toString()+")");
+    LOG.debug("put("+key.toString()+")");
+    LOG.trace(obj.toString());
 
     if (obj.get(primaryFieldPos)==null)
       obj.put(primaryFieldPos,key);
 
     if (!obj.get(primaryFieldPos).equals(key) )
-      LOG.warn("Invalid or different primary field !");
+      LOG.warn("Invalid or different primary field :"+key+"<->"+obj.get(primaryFieldPos));
 
     this.infinispanClient.put(key, obj);
   }
@@ -304,7 +314,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
   }
 
   public int getPrimaryFieldPos(){
-    LOG.info("getPrimaryFieldPos()");
+    LOG.debug("getPrimaryFieldPos()");
     return primaryFieldPos;
   }
 
@@ -313,8 +323,4 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
     primaryFieldPos = p;
   }
 
-  public void setPartitionSize(int i) {
-    LOG.debug("setPartitionSize()");
-    partitionSize = i;
-  }
 }
