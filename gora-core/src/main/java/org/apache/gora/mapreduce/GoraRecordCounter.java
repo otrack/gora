@@ -17,7 +17,13 @@
  */
 package org.apache.gora.mapreduce;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class GoraRecordCounter {
+
+  public static final Logger LOG = LoggerFactory.getLogger(GoraRecordCounter.class);
+  
   /**
    * Count the number of records read from the datastore per system call.
    */
@@ -45,6 +51,8 @@ public class GoraRecordCounter {
   }
 
   public boolean isModulo() {
-    return ((this.recordsNumber % this.recordsMax) == 0);
+    boolean result = ((this.recordsNumber % this.recordsMax) == 0);
+    LOG.trace(Boolean.toString(result));
+    return result;
   }
 }

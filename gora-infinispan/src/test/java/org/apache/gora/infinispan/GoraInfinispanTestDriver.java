@@ -72,7 +72,8 @@ public class GoraInfinispanTestDriver extends GoraTestDriver {
   }
 
   public String connectionString(){
-    return delegate.connectionString();
+    return "127.0.0.1:11222";
+    // return delegate.connectionString();
   }
 
   @Override
@@ -107,7 +108,7 @@ public class GoraInfinispanTestDriver extends GoraTestDriver {
 
     private EnsembleDelegate(){
       try {
-        createCacheManagers();
+        // createCacheManagers();
       } catch (Throwable throwable) {
         throwable.printStackTrace();  // TODO: Customise this generated block
       }

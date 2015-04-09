@@ -29,12 +29,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
-import static  org.apache.gora.mapreduce.GoraRecordReader.BUFFER_LIMIT_READ_NAME;
-import static  org.apache.gora.mapreduce.GoraRecordReader.BUFFER_LIMIT_READ_VALUE;
+import static org.apache.gora.mapreduce.GoraRecordReader.BUFFER_LIMIT_READ_NAME;
+import static org.apache.gora.mapreduce.GoraRecordReader.BUFFER_LIMIT_READ_VALUE;
 
 /**
  * {@link org.apache.gora.infinispan.store.InfinispanStore} is the primary class
@@ -206,7 +204,7 @@ public class InfinispanStore<K, T extends PersistentBase> extends DataStoreBase<
     List<PartitionQuery<K,T>> splitLocations = new ArrayList<>();
     for(PartitionQuery<K,T> location : locations) {
 
-      LOG.trace("location: "+ location.getLocations()[0]);
+      LOG.trace("location: "+ ((InfinispanQuery)location).getLocation().toString());
 
       // 2.1 - compute the result size
       InfinispanQuery<K,T> sizeQuery = (InfinispanQuery<K, T>) ((InfinispanQuery<K, T>) location).clone();

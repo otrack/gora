@@ -62,8 +62,8 @@ public class InfinispanClient<K, T extends PersistentBase> implements Configurab
   private BasicCache<K, T> cache;
   private boolean cacheExists;
 
-  private Map<K,T> toAdd;
-  private Collection<Future> futures;
+  private Map<K,T> toPut;
+  private List<Future> futures; 
 
   public InfinispanClient() {
     conf = new Configuration();
@@ -91,9 +91,8 @@ public class InfinispanClient<K, T extends PersistentBase> implements Configurab
     qf = (AvroQueryFactory) org.infinispan.ensemble.search.Search.getQueryFactory((EnsembleCache)cache);
     createSchema();
 
-    toAdd = new HashMap<>();
+    toPut = new HashMap<>();
     futures = new ArrayList<>();
-    
   }
 
   public boolean cacheExists(){
@@ -126,7 +125,7 @@ public class InfinispanClient<K, T extends PersistentBase> implements Configurab
   }
 
   public synchronized void put(K key, T val) {
-    toAdd.put(key,val);
+    toPut.put(key, val);
   }
 
   public void putIfAbsent(K key, T obj) {
@@ -188,24 +187,22 @@ public class InfinispanClient<K, T extends PersistentBase> implements Configurab
 
 
   public synchronized void flush(){
-    LOG.debug("flush()");
-    futures.add(cache.putAllAsync(toAdd));
-    toAdd = new HashMap<>();
+    LOG.debug("flush()"); 
+    futures.add(cache.putAllAsync(toPut));
+    toPut = new HashMap<>();
   }
 
   public synchronized void close() {
     LOG.debug("close()");
     flush();
-    long start = System.currentTimeMillis();
-    for(Future future : futures) {
+    for(Future future: futures) {
       try {
         future.get();
       } catch (InterruptedException | ExecutionException e) {
         e.printStackTrace();
-        // nothing to do.
+        // nothing else to do.
       }
     }
-    LOG.info("closing  in " + (System.currentTimeMillis() - start));
     getCache().stop();
     cacheManager.stop();
   }

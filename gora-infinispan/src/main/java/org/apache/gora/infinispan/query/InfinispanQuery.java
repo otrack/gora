@@ -250,6 +250,10 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
     return result;
   }
   
+  public InetSocketAddress getLocation(){
+    return location;
+  }
+  
   // FIXME use the write non-null fields function.
 
   @Override
@@ -276,7 +280,7 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
   public String toString() {
     ToStringBuilder builder = new ToStringBuilder(this);
     builder.append("dataStore", dataStore);
-    builder.append("location", location==null ? null :location.getHostString());
+    builder.append("location", location==null ? null :location.toString());
     builder.append("fields", fields);
     builder.append("startKey", startKey);
     builder.append("endKey", endKey);

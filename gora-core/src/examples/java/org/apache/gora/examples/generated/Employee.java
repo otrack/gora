@@ -248,7 +248,7 @@ public class Employee extends org.apache.gora.persistency.impl.PersistentBase im
     return isDirty(5);
   }
 
-  /** Creates a new Employee RecordBuilder */
+  /** Creates a new Employee RecordkBuilder */
   public static org.apache.gora.examples.generated.Employee.Builder newBuilder() {
     return new org.apache.gora.examples.generated.Employee.Builder();
   }

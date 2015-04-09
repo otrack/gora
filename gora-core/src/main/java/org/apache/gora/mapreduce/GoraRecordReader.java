@@ -50,14 +50,9 @@ public class GoraRecordReader<K, T extends PersistentBase> extends RecordReader<
     this.query = query;
 
     Configuration configuration = context.getConfiguration();
-    int recordsMax = configuration.getInt(BUFFER_LIMIT_READ_NAME, BUFFER_LIMIT_READ_VALUE);
-
-    if (recordsMax <= 0) {
-      LOG.info("Invalid read limit" + recordsMax + ", changed to " + BUFFER_LIMIT_READ_VALUE);
-      recordsMax = BUFFER_LIMIT_READ_VALUE;
-    }
-    
+    int recordsMax = BUFFER_LIMIT_READ_VALUE; // FIXME
     counter.setRecordsMax(recordsMax);
+    LOG.info("gora.buffer.read.limit = " + recordsMax);
 
   }
 

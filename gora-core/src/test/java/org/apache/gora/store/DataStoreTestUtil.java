@@ -1188,7 +1188,7 @@ public class DataStoreTestUtil {
     filter.setOperands(operands);
     assertFalse(filter.filter("url", page)); // the page is not filtered out.
 
-    store.put("com.example/http", page);
+    store.put(page.getUrl(), page);
     store.flush();
     Query<String, WebPage> query = store.newQuery();
     query.setFilter(filter);

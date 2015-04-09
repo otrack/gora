@@ -34,8 +34,8 @@ import org.slf4j.LoggerFactory;
 public class GoraRecordWriter<K, T> extends RecordWriter<K, T> {
   public static final Logger LOG = LoggerFactory.getLogger(GoraRecordWriter.class);
   
-  private static final String BUFFER_LIMIT_WRITE_NAME = "gora.buffer.write.limit";
-  private static final int BUFFER_LIMIT_WRITE_VALUE = 10000;
+  public static final String BUFFER_LIMIT_WRITE_NAME = "gora.buffer.write.limit";
+  public static final int BUFFER_LIMIT_WRITE_VALUE = 1000;
 
   private DataStore<K, Persistent> store;
   private GoraRecordCounter counter = new GoraRecordCounter();
