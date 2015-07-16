@@ -37,8 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import static org.apache.gora.store.DataStoreFactory.GORA_CONNECTION_STRING_DEFAULT;
 import static org.apache.gora.store.DataStoreFactory.GORA_CONNECTION_STRING_KEY;
@@ -63,7 +61,6 @@ public class InfinispanClient<K, T extends PersistentBase> implements Configurab
   private boolean cacheExists;
 
   private Map<K,T> toPut;
-  private List<Future> futures; 
 
   public InfinispanClient() {
     conf = new Configuration();
@@ -81,7 +78,7 @@ public class InfinispanClient<K, T extends PersistentBase> implements Configurab
     this.keyClass = keyClass;
     this.persistentClass = persistentClass;
     AvroMarshaller<T> marshaller = new AvroMarshaller<T>(persistentClass);
-    cacheManager = new EnsembleCacheManager(host,marshaller);
+    cacheManager = new EnsembleCacheManager(host,marshaller,properties);
 
     cache = cacheManager.getCache(
       persistentClass.getSimpleName(),
@@ -92,7 +89,6 @@ public class InfinispanClient<K, T extends PersistentBase> implements Configurab
     createSchema();
 
     toPut = new HashMap<>();
-    futures = new ArrayList<>();
   }
 
   public boolean cacheExists(){
@@ -186,23 +182,15 @@ public class InfinispanClient<K, T extends PersistentBase> implements Configurab
   }
 
 
-  public synchronized void flush(){
+  public void flush(){
     LOG.debug("flush()"); 
-    futures.add(cache.putAllAsync(toPut));
-    toPut = new HashMap<>();
+    cache.putAll(toPut);
+    toPut.clear();
   }
 
   public synchronized void close() {
     LOG.debug("close()");
     flush();
-    for(Future future: futures) {
-      try {
-        future.get();
-      } catch (InterruptedException | ExecutionException e) {
-        e.printStackTrace();
-        // nothing else to do.
-      }
-    }
     getCache().stop();
     cacheManager.stop();
   }
