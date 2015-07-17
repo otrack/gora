@@ -30,7 +30,7 @@ import org.apache.gora.infinispan.store.InfinispanStore;
 import org.apache.gora.persistency.Persistent;
 import org.apache.gora.store.DataStore;
 import org.apache.gora.util.GoraException;
-import org.infinispan.ensemble.test.MultipleSitesAbstractTest;
+import org.infinispan.ensemble.test.SimulationDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class GoraInfinispanTestDriver extends GoraTestDriver {
 
   private static Logger log = LoggerFactory.getLogger(GoraInfinispanTestDriver.class);
 
-  private EnsembleDelegate delegate;
+  private SimulationDriver delegate;
   private int numberOfSites;
   private int numbderOfNodes;
   public List<String> cacheNames;
@@ -72,15 +72,22 @@ public class GoraInfinispanTestDriver extends GoraTestDriver {
   }
 
   public String connectionString(){
-    return "127.0.0.1:11222";
-    // return delegate.connectionString();
+    return delegate.connectionString();
   }
 
   @Override
   public void setUpClass() throws Exception {
     super.setUpClass();
     log.info("Starting Infinispan...");
-    delegate = new EnsembleDelegate();
+    delegate = new SimulationDriver();
+    delegate.setNumberOfNodes(numbderOfNodes);
+    delegate.setNumberOfSites(numberOfSites);
+    delegate.setCacheNames(cacheNames);
+   try{
+     delegate.createSites();
+   }catch (Throwable e){
+     throw new RuntimeException();
+   }
   }
 
   @Override
@@ -104,31 +111,5 @@ public class GoraInfinispanTestDriver extends GoraTestDriver {
     return store;
   }
 
-  private class EnsembleDelegate extends MultipleSitesAbstractTest{
-
-    private EnsembleDelegate(){
-      try {
-        // createCacheManagers();
-      } catch (Throwable throwable) {
-        throwable.printStackTrace();  // TODO: Customise this generated block
-      }
-    }
-
-    @Override
-    protected int numberOfSites() {
-      return numberOfSites;
-    }
-
-    @Override
-    protected int numberOfNodes() {
-      return numbderOfNodes;
-    }
-
-    @Override
-    public List<String> cacheNames(){
-      return cacheNames;
-    }
-
-  }
 
 }
