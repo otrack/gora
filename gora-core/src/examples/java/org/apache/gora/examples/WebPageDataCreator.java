@@ -130,7 +130,7 @@ public class WebPageDataCreator {
         }
         
         Metadata metadata = Metadata.newBuilder().build();
-        metadata.setVersion(1);
+        metadata.setVersion(i);
         metadata.getData().put("metakey", "metavalue");
         page.setMetadata(metadata);
 

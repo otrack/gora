@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.impl.avro.AvroQueryBuilder;
 import org.infinispan.client.hotrod.impl.avro.AvroRemoteQuery;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.SortOrder;
+import org.infinispan.query.remote.client.avro.AvroSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,10 +25,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static org.infinispan.query.remote.avro.ValueWrapperFieldBridge.DELIMITER;
-
 /*
- * * @author Pierre Sutra,Valerio Schiavoni
+ * * @author Pierre Sutra
  */
 public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T> implements
   PartitionQuery<K,T>, Cloneable{
@@ -81,7 +80,7 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
         throw new IllegalAccessError("MapFieldValueFilter operand not supported.");
       if (!(mfilter.getOperands().get(0) instanceof String))
         throw new IllegalAccessError("Invalid operand, must be a string.");
-      String value = mfilter.getMapKey()+DELIMITER+mfilter.getOperands().get(0).toString();
+      String value = mfilter.getMapKey()+ AvroSupport.DELIMITER+mfilter.getOperands().get(0).toString();
       switch (mfilter.getFilterOp()) {
         case EQUALS:
           context = qb.having(mfilter.getFieldName()).eq(value);

@@ -17,7 +17,6 @@
  */
 package org.apache.gora.filter;
 
-import org.apache.avro.util.Utf8;
 import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ObjectWritable;
@@ -129,6 +128,12 @@ public class SingleFieldValueFilter<K, T extends PersistentBase> implements Filt
   }
   public void setOperands(List<Object> operands) {
     this.operands = operands;
+  }
+
+  public void setOperands(Object[] operands) {
+    this.operands = new ArrayList<>();
+    for(Object operand: operands)
+      this.operands.add(operand);
   }
   
   public void setFilterIfMissing(boolean filterIfMissing) {

@@ -297,7 +297,13 @@ public abstract class DataStoreTestBase {
     DataStoreTestUtil.testGetEmployeeNonExisting(employeeStore);
   }
 
- @Test
+  @Test
+  public void testQueryMetadataVersion() throws IOException, Exception {
+    log.info("test method: testQueryMetadataVersion");
+    DataStoreTestUtil.testQueryWebPagesMetadataVersion(webPageStore);
+  }
+
+  @Test
   public void testQuery() throws IOException, Exception {
     log.info("test method: testQuery");
     DataStoreTestUtil.testQueryWebPages(webPageStore);

@@ -25,6 +25,7 @@ import org.apache.gora.examples.generated.Metadata;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.filter.FilterOp;
 import org.apache.gora.filter.MapFieldValueFilter;
+import org.apache.gora.filter.SingleFieldValueFilter;
 import org.apache.gora.persistency.Persistent;
 import org.apache.gora.persistency.impl.BeanFactoryImpl;
 import org.apache.gora.query.PartitionQuery;
@@ -65,16 +66,16 @@ public class DataStoreTestUtil {
     T obj2 = dataStore.newPersistent();
 
     assertEquals(dataStore.getPersistentClass(),
-        obj1.getClass());
+      obj1.getClass());
     assertNotNull(obj1);
     assertNotNull(obj2);
-    assertFalse( obj1 == obj2 );
+    assertFalse(obj1 == obj2);
   }
 
   public static Employee createRandomJoe() {
     Employee employee = Employee.newBuilder().build();
     employee.setName("Random Joe");
-    employee.setDateOfBirth( System.currentTimeMillis() - 20L *  YEAR_IN_MS );
+    employee.setDateOfBirth(System.currentTimeMillis() - 20L * YEAR_IN_MS);
     employee.setSalary(100000);
     employee.setSsn("101010101010");
     return employee;
@@ -214,7 +215,7 @@ public class DataStoreTestUtil {
     webpage.setUrl("url..") ;
     webpage.setContent(ByteBuffer.wrap("test content".getBytes())) ;
     webpage.setParsedContent(new ArrayList<String>());
-    Metadata metadata = new BeanFactoryImpl<String,Metadata>(String.class,Metadata.class).newPersistent();
+    Metadata metadata = new BeanFactoryImpl<>(String.class, Metadata.class).newPersistent();
     webpage.setMetadata(metadata) ;
     employee.setWebpage(webpage) ;
     
@@ -236,7 +237,8 @@ public class DataStoreTestUtil {
     String ssn = employee.getSsn();
     dataStore.put(ssn, employee);
     dataStore.flush();
-    Employee after = dataStore.get(ssn, AvroUtils.getSchemaFieldNames(Employee.SCHEMA$));
+    Employee after = dataStore.get(ssn,
+      AvroUtils.getSchemaFieldNames(Employee.SCHEMA$));
     assertEqualEmployeeObjects(employee, after);
     assertEquals("Real boss", ((String) after.getBoss())) ;
   }
@@ -514,7 +516,8 @@ public class DataStoreTestUtil {
 
     for (int i = 0; i < urls.length; i++) {
       WebPage webPage = dataStore.get(urls[i]);
-      assertEquals(content + i, ByteUtils.toString( toByteArray(webPage.getContent()) ));
+      assertEquals(content + i, ByteUtils.toString(
+        toByteArray(webPage.getContent())));
       assertEquals(10, webPage.getParsedContent().size());
       int j = 0;
       for (String pc : webPage.getParsedContent()) {
@@ -827,8 +830,30 @@ public class DataStoreTestUtil {
   }
 
   public static void testQueryWebPages(DataStore<String, WebPage> store)
-  throws IOException, Exception {
+    throws IOException, Exception {
     testQueryWebPageKeyRange(store, false, false);
+  }
+
+  public static void testQueryWebPagesMetadataVersion(DataStore<String, WebPage> store)
+    throws Exception {
+
+    createWebPageData(store);
+
+    SingleFieldValueFilter filter = new SingleFieldValueFilter();
+    filter.setFieldName("metadata.version");
+    filter.setFilterOp(FilterOp.EQUALS);
+    filter.setOperands(new Object[] {1});
+    Query<String, WebPage> query = store.newQuery();
+    query.setFilter(filter);
+
+    Result<String, WebPage> result = query.execute();
+    int hits = 0;
+    while(result.next()) {
+      hits++;
+      WebPage page = result.get();
+      assertEquals(new Integer(1),page.getMetadata().getVersion());
+    }
+    assertEquals(1,hits);
   }
 
   public static void testQueryWebPageStartKey(DataStore<String, WebPage> store)
@@ -1193,7 +1218,7 @@ public class DataStoreTestUtil {
     Query<String, WebPage> query = store.newQuery();
     query.setFilter(filter);
     Result<String,WebPage> result = query.execute();
-    result.next();
+    assert result.next();
     WebPage page2 = result.get();
     assertTrue(page2.equals(page));
   }

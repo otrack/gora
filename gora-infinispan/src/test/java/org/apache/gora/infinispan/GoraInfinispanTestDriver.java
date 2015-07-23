@@ -86,6 +86,7 @@ public class GoraInfinispanTestDriver extends GoraTestDriver {
    try{
      delegate.createSites();
    }catch (Throwable e){
+     e.printStackTrace();
      throw new RuntimeException();
    }
   }

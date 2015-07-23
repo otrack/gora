@@ -70,9 +70,11 @@ public class InfinispanClient<K, T extends PersistentBase> implements Configurab
 
     if (cache!=null)
       return; // already initialized.
-    
+
     String host = properties.getProperty(GORA_CONNECTION_STRING_KEY,
       getConf().get(GORA_CONNECTION_STRING_KEY,GORA_CONNECTION_STRING_DEFAULT));
+    conf.set(GORA_CONNECTION_STRING_KEY, host);
+    properties.setProperty(GORA_CONNECTION_STRING_KEY, host);
     LOG.info("Connecting client to "+host);
 
     this.keyClass = keyClass;
