@@ -63,7 +63,7 @@ public class InfinispanStoreTest extends DataStoreTestBase {
     List<String> cacheNames = new ArrayList<>();
     cacheNames.add(Employee.class.getSimpleName());
     cacheNames.add(WebPage.class.getSimpleName());
-    setTestDriver(new GoraInfinispanTestDriver(1, 1, cacheNames));
+    setTestDriver(new GoraInfinispanTestDriver(1, 2, cacheNames));
     DataStoreTestBase.setUpClass();
   }
 

@@ -834,27 +834,27 @@ public class DataStoreTestUtil {
     testQueryWebPageKeyRange(store, false, false);
   }
 
-  public static void testQueryWebPagesMetadataVersion(DataStore<String, WebPage> store)
-    throws Exception {
-
-    createWebPageData(store);
-
-    SingleFieldValueFilter filter = new SingleFieldValueFilter();
-    filter.setFieldName("metadata.version");
-    filter.setFilterOp(FilterOp.EQUALS);
-    filter.setOperands(new Object[] {1});
-    Query<String, WebPage> query = store.newQuery();
-    query.setFilter(filter);
-
-    Result<String, WebPage> result = query.execute();
-    int hits = 0;
-    while(result.next()) {
-      hits++;
-      WebPage page = result.get();
-      assertEquals(new Integer(1),page.getMetadata().getVersion());
-    }
-    assertEquals(1,hits);
-  }
+//  public static void testQueryWebPagesMetadataVersion(DataStore<String, WebPage> store)
+//    throws Exception {
+//
+//    createWebPageData(store);
+//
+//    SingleFieldValueFilter filter = new SingleFieldValueFilter();
+//    filter.setFieldName("metadata.version");
+//    filter.setFilterOp(FilterOp.EQUALS);
+//    filter.setOperands(new Object[] {1});
+//    Query<String, WebPage> query = store.newQuery();
+//    query.setFilter(filter);
+//
+//    Result<String, WebPage> result = query.execute();
+//    int hits = 0;
+//    while(result.next()) {
+//      hits++;
+//      WebPage page = result.get();
+//      assertEquals(new Integer(1),page.getMetadata().getVersion());
+//    }
+//    assertEquals(1,hits);
+//  }
 
   public static void testQueryWebPageStartKey(DataStore<String, WebPage> store)
   throws IOException, Exception {
