@@ -161,12 +161,15 @@ public class InfinispanQuery<K, T extends PersistentBase> extends QueryBase<K, T
 
     // if projection enabled, keep the primary field.
     if (fields!=null && fields.length > 0) {
+      String[] fieldsWithPrimary;
       List<String> fieldsList = new ArrayList<>(Arrays.asList(fields));
       if (!fieldsList.contains(getPrimaryFieldName())) {
-        String[] fieldsWithPrimary = Arrays.copyOf(fields, fields.length + 1);
+        fieldsWithPrimary = Arrays.copyOf(fields, fields.length + 1);
         fieldsWithPrimary[fields.length] = getPrimaryFieldName();
-        qb.setProjection(fieldsWithPrimary);
+      }else{
+        fieldsWithPrimary = fieldsList.toArray(new String[]{});
       }
+      qb.setProjection(fieldsWithPrimary);
     }
     
     qb.orderBy(
