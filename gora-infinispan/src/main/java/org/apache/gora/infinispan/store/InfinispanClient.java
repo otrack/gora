@@ -28,9 +28,9 @@ import org.infinispan.commons.api.BasicCache;
 import org.infinispan.ensemble.EnsembleCacheManager;
 import org.infinispan.ensemble.Site;
 import org.infinispan.ensemble.cache.EnsembleCache;
-import org.infinispan.ensemble.cache.distributed.ClusteringBasedPartitioner;
 import org.infinispan.ensemble.cache.distributed.Coordinates;
-import org.infinispan.ensemble.cache.distributed.Partitioner;
+import org.infinispan.ensemble.cache.distributed.partitioning.ClusteringBasedPartitioner;
+import org.infinispan.ensemble.cache.distributed.partitioning.Partitioner;
 import org.infinispan.query.remote.client.avro.AvroMarshaller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,8 +47,10 @@ import static org.apache.gora.store.DataStoreFactory.GORA_CONNECTION_STRING_KEY;
 public class InfinispanClient<K, T extends PersistentBase> implements Configurable{
 
   public static final Logger LOG = LoggerFactory.getLogger(InfinispanClient.class);
-  public static final String INFINISPAN_PARTITIONER_KEY = "infinispan.partitioner.class";
-  public static final String INFINISPAN_PARTITIONER_DEFAULT = "org.infinispan.ensemble.cache.distributed.HashBasedPartitioner";
+  public static final String INFINISPAN_PARTITIONER_KEY
+    = "infinispan.partitioner.class";
+  public static final String INFINISPAN_PARTITIONER_DEFAULT
+    = "org.infinispan.ensemble.cache.distributed.partitioning.HashBasedPartitioner";
 
   private Configuration conf;
 
@@ -169,7 +171,7 @@ public class InfinispanClient<K, T extends PersistentBase> implements Configurab
       parameters = new Object[]{caches,l};
     }
 
-    return partitionerClass.getConstructor(parameterTypes).newInstance(parameters);
+    return (Partitioner<K, T>) partitionerClass.getConstructor(parameterTypes).newInstance(parameters);
 
   }
 

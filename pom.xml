@@ -610,7 +610,7 @@
         <!-- Dependencies -->
         <osgi.version>4.2.0</osgi.version>
         <!-- Avro Dependencies -->
-        <avro.version>1.7.4</avro.version>
+        <avro.version>1.7.6</avro.version>
         <jackson.version>1.8.8</jackson.version>
         <!-- Hadoop Dependencies -->
         <hadoop.version>2.5.2</hadoop.version>
